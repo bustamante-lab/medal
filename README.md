@@ -1,2 +1,2 @@
-# medal
+# MedAl
 Medication Alignment Algorithm
