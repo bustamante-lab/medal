@@ -19,89 +19,8 @@ matrixInitialization <- function(sequence1, sequence2){
   return(list(edit=edit.matrix, arrow=arrow.matrix))
 }
 
-matrixFill <- function(edit.matrix, arrow.matrix, arrow.labels){
-  
-  n = dim(edit.matrix)[1] #last column 
-  m = dim(edit.matrix)[2] #last row
-  
-  for(i in 2:n){
-    for(j in 2:m){
-      
-      left = edit.matrix[i,j-1]
-      diag = edit.matrix[i-1,j-1]
-      top = edit.matrix[i-1,j]
-      neighbors = c(left, diag, top)
-      
-      letterH1 = colnames(edit.matrix)[j-1]
-      letterH2 = colnames(edit.matrix)[j]
-      letterV1 = rownames(edit.matrix)[i-1]
-      letterV2 = rownames(edit.matrix)[i]
-      
-      paste(letterH1, letterH2, sep="")
-      paste(letterV1, letterV2, sep="")
-      
-      cellValue = -1
-      direction = ""
-      
-      char=sort(unique(c(colnames(edit.matrix), rownames(edit.matrix))))[3]
-      
-      #Case 1: start of medication
-      if(letterH2 == char && letterH1 != char) {
-        if(letterH2 == letterV2){ #same
-          cellValue = min(neighbors)
-          direction = which(neighbors == min(neighbors))[1]
-        }
-        else{ #different
-          cellValue = min(neighbors) + 1
-          direction = which(neighbors == min(neighbors))[1]
-        }
-      }
-      #Case 2: continuing medication
-      else if(letterH2 == char && letterH1 == char) {
-        if(letterH2 == letterV2){ #same
-          cellValue = min(neighbors)
-          direction = which(neighbors == min(neighbors))[1]
-        }
-        else{ #different
-          cellValue = max(neighbors)
-          direction = which(neighbors == max(neighbors))[1]
-        }
-      }
-      #Case 3: end of medication
-      else if(letterH2 == '∅' && letterH1 == char) {
-        if(letterH2 == letterV2){ #same
-          cellValue = min(neighbors)
-          direction = which(neighbors == min(neighbors))[1]
-        }
-        else{ #different
-          cellValue = min(neighbors) + 1
-          direction = which(neighbors == min(neighbors))[1]
-        }
-      }
-      #Case 4: continuing gap
-      else if(letterH2 == '∅' && letterH1 == '∅') {
-        if(letterH2 == letterV2){ #same
-          cellValue = min(neighbors) + 1
-          direction = which(neighbors == min(neighbors))[1]
-        }
-        else{ #different
-          cellValue = max(neighbors) + 1
-          direction = which(neighbors == max(neighbors))[1]
-        }
-      }
-      #Assign the new Value
-      edit.matrix[i, j] = cellValue
-      
-      #Assign the arrow direction (L:left, D:diag, T:top)
-      
-      arrow.matrix[i,j] = arrow.labels[direction]
-    }
-  }
-  
-  return(list(edit=edit.matrix, arrow=arrow.matrix))
-}
 
-matrixFill2 <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
+matrixFill <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
   
   n = dim(edit.matrix)[1] #last column 
   m = dim(edit.matrix)[2] #last row
@@ -210,72 +129,7 @@ matrixFill2 <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
 }
 
 
-
-
-matrixTraceback <- function(edit.matrix, arrow.matrix, arrow.labels){
-  i = dim(edit.matrix)[1] #last column 
-  j = dim(edit.matrix)[2] #last row
-  
-  alignment = c()
-  nseq1 = ""
-  nseq2 = ""
-  
-  while(i >= 1 && j >= 1){
-    
-    letterH2 = colnames(edit.matrix)[j]
-    letterV2 = rownames(edit.matrix)[i]
-    if(letterH2=="" && letterV2==""){
-      break
-    }
-    
-    step = c(i,j, edit.matrix[i,j])
-    
-    alignment = rbind(alignment, step)
-    #print(paste(c(step, arrow.matrix[i,j]), collapse=" " ))
-    
-    if(arrow.matrix[i,j] == arrow.labels[1]){ #left
-      j = j - 1
-      nseq1 = c(letterH2, nseq1)
-      nseq2 = c("_", nseq2)
-    } else if(arrow.matrix[i,j] == arrow.labels[2]){ #diag
-      i = i - 1
-      j = j - 1
-      nseq1 = c(letterH2, nseq1)
-      nseq2 = c(letterV2, nseq2)
-      
-    } else if(arrow.matrix[i,j] == arrow.labels[3]){ #top
-      i = i - 1
-      nseq1 = c("_", nseq1)
-      nseq2 = c(letterV2, nseq2)
-    }
-    else{
-      if(i >= 1){
-        i = i - 1
-        nseq1 = c("_", nseq1)
-        nseq2 = c(letterV2, nseq2)
-      } else if(j >= 1){
-        j = j - 1
-        nseq1 = c(letterH2, nseq1)
-        nseq2 = c("_", nseq2)
-      } 
-    }
-    #print(nseq1)
-    #print(nseq2)
-  }
-  
-  colnames(alignment) = c("i", "j", "v")
-  
-  
-  #alig = as.data.frame(rbind(unlist(strsplit(nseq1, " ")), unlist(strsplit(nseq2, " "))))
-  alig = as.data.frame(rbind(nseq1, nseq2))
-  rownames(alig) = c(pat1, pat2)
-  
-  #orig = rbind(sequence1, sequence2)
-  
-  return(alig)
-}
-
-matrixTraceback2 <- function(edit.matrix){
+matrixTraceback <- function(edit.matrix){
   i = dim(edit.matrix)[1] #last column 
   j = dim(edit.matrix)[2] #last row
   
@@ -356,10 +210,10 @@ medalPairwise <- function(sequence1, sequence2, verbose=FALSE) {
   # Second, Matrix Fill Step ======================
   
   if(verbose==TRUE){
-    mf = matrixFill2(edit.matrix, arrow.matrix, arrow.labels, TRUE)
+    mf = matrixFill(edit.matrix, arrow.matrix, arrow.labels, TRUE)
   }
   else{
-    mf = matrixFill2(edit.matrix, arrow.matrix, arrow.labels, FALSE)
+    mf = matrixFill(edit.matrix, arrow.matrix, arrow.labels, FALSE)
   }
   edit.matrix = mf$edit
   arrow.matrix = mf$arrow
@@ -372,7 +226,7 @@ medalPairwise <- function(sequence1, sequence2, verbose=FALSE) {
   # Third, Traceback Step ======================
   
   #alignment = matrixTraceback(edit.matrix, arrow.matrix, arrow.labels)
-  alignment = matrixTraceback2(edit.matrix)
+  alignment = matrixTraceback(edit.matrix)
   
   paste(unlist(alignment[1,]), collapse="")
   paste(unlist(alignment[2,]), collapse="")
@@ -407,7 +261,7 @@ getSequences <- function(pat1, pat2) {
   
   sequences = list()
   
-  #Per Patient  =======
+  #Per Patient
   for(medication in medications){
     ind.pat1 = which(pat1$medication==medication)
     ind.pat2 = which(pat2$medication==medication)
@@ -464,6 +318,12 @@ getSequences <- function(pat1, pat2) {
     }
     
   }
+  
+  return(sequences)
+}
+
+
+compactSequences <- function(sequences) {
   
   return(sequences)
 }

@@ -2,7 +2,7 @@
 #
 # Project: Medication Alignment Algorithm (Medal)
 # Author: Arturo Lopez Pineda <arturolp@stanford.edu>
-# Date: June 28, 2018
+# Date: Aug 3, 2018
 #
 ###############################################################
 
@@ -24,7 +24,7 @@ source("medal-functions.R")
 #                             nrow=9, ncol=4, byrow=TRUE))
 
 
-events = read.csv("medication/medsEvents.csv", stringsAsFactors = FALSE)
+events = read.csv("../medication/medsEvents.csv", stringsAsFactors = FALSE)
 data=events[,c("id", "medication", "start", "end")]
 
 colnames(data) = c("patientID", "medication", "start", "end")
@@ -78,6 +78,8 @@ medications = names(sequences)
 for(medication in medications){
   
   if(dim(sequences[[medication]])[1] == 2){
+    
+    seq = compactSequences(sequences[[medication]])
     
     sequence1 = sequences[[medication]][1,]
     sequence2 = sequences[[medication]][2,]
