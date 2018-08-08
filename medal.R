@@ -82,6 +82,25 @@ for(i in 2:length(patients)){
   }
 }
 
+#write.csv(distMatrix, "../distance-matrix-medal.csv")
+
 # Step 4. Compute a dendrogram ----------------------
 
+k = 12
 
+require(magrittr)
+require(ggplot2)
+require(dendextend)
+
+dend <- distMatrix %>% as.dist %>%
+  hclust(method="complete") %>% as.dendrogram %>%
+  set("branches_k_color", k = k) %>% set("branches_lwd", 0.7) %>%
+  set("labels_cex", 0.6) %>% set("labels_colors", k = k) %>%
+  set("leaves_pch", 19) %>% set("leaves_cex", 0.5) 
+ggd1 <- as.ggdend(dend)
+ggplot(ggd1, horiz = FALSE)
+
+
+clusterCut = cutree(dend, k)
+
+which(clusterCut==3)
