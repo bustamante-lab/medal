@@ -38,7 +38,7 @@ matrixFill <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
     for(j in 2:m){
       
       cpu.time = ptm-proc.time()
-      print(paste("[",i,",",j,"] = ", cpu.time[2], sep=""))
+      #print(paste("[",i,",",j,"] = ", cpu.time[2], sep=""))
       
       left = edit.matrix[i,j-1]
       diag = edit.matrix[i-1,j-1]
@@ -50,7 +50,12 @@ matrixFill <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
       letterV1 = rownames(edit.matrix)[i-1]
       letterV2 = rownames(edit.matrix)[i]
       
-      char=sort(unique(c(colnames(edit.matrix), rownames(edit.matrix))))[3]
+      chars = sort(unique(c(colnames(edit.matrix), rownames(edit.matrix))))
+      if(length(chars) > 2){
+        char = chars[3]
+      } else{
+        char = chars[2]
+      }
       
       #Start of medication
       startMedH = (letterH2 == char && letterH1 != char)
@@ -267,8 +272,8 @@ getSequences <- function(pat1, pat2) {
     ind.pat2 = which(pat2$medication==medication)
     
     combined = rbind(pat1[ind.pat1,],pat2[ind.pat2,])
-    maxTime = max(as.numeric(as.character(combined[,"end"])))
-    minTime = min(as.numeric(as.character(combined[,"start"])))
+    maxTime = round(max(as.numeric(as.character(combined[,"end"]))))
+    minTime = round(min(as.numeric(as.character(combined[,"start"]))))
     dif=maxTime-minTime + 1
     
     #If there is information for Patient 1
@@ -281,8 +286,8 @@ getSequences <- function(pat1, pat2) {
       
       #Fill in the values
       for(ind in ind.pat1){
-        start = as.numeric(as.character(pat1[ind,"start"]))
-        end = as.numeric(as.character(pat1[ind,"end"]))
+        start = round(as.numeric(as.character(pat1[ind,"start"])))
+        end = round(as.numeric(as.character(pat1[ind,"end"])))
         char = as.character(pat1[ind,"medication"])
         days = paste("day", start:end, sep="")
         med1[1, days] = toupper(substr(char,1,1))
@@ -299,8 +304,8 @@ getSequences <- function(pat1, pat2) {
       
       #Fill in the values
       for(ind in ind.pat2){
-        start = as.numeric(as.character(pat2[ind,"start"]))
-        end = as.numeric(as.character(pat2[ind,"end"]))
+        start = round(as.numeric(as.character(pat2[ind,"start"])))
+        end = round(as.numeric(as.character(pat2[ind,"end"])))
         char = as.character(pat2[ind,"medication"])
         days = paste("day", start:end, sep="")
         med2[1, days] = toupper(substr(char,1,1))
@@ -322,9 +327,167 @@ getSequences <- function(pat1, pat2) {
   return(sequences)
 }
 
-
-compactSequences <- function(sequences) {
+compactSequence1 <- function(sequence) {
   
-  return(sequences)
+  seq = c()
+  count = 0
+  for(i in 1:length(sequence)){
+    if(sequence[i] != "∅"){
+      seq = c(seq, sequence[i])
+      count = 0
+    }
+    else{
+      count = count + 1
+      if(count <= 2){
+        seq = c(seq, sequence[i])
+      }
+      
+    }
+  }
+  
+  return(seq)
+  
 }
+
+compactSequence <- function(sequence) {
+  
+  seq = c()
+  count.empty = 0
+  count.med = 0
+  for(i in 1:length(sequence)){
+    if(sequence[i] != "∅"){
+      count.empty = 0
+      count.med = count.med + 1
+      if(count.med <= 5){
+        seq = c(seq, sequence[i])
+      }
+    }
+    else{
+      count.med = 0
+      count.empty = count.empty + 1
+      if(count.empty <= 2){
+        seq = c(seq, sequence[i])
+      }
+      
+    }
+  }
+  
+  return(seq)
+  
+}
+
+medalDistance <- function(pat1, pat2, verbose = FALSE){
+  
+  medal.distance = 0
+  size.total = 0
+  
+  sequences = getSequences(pat1, pat2)
+  
+  medications = names(sequences)
+  
+  for(medication in medications){
+    distance = 0
+    size = 0
+    pat1.empty = 0
+    pat1.empty.orig = 0
+    pat1.med = 0
+    pat1.med.orig = 0
+    pat2.empty = 0
+    pat2.empty.orig = 0
+    pat2.med = 0
+    pat2.med.orig = 0
+    
+    if(dim(sequences[[medication]])[1] == 2){
+      
+      seq1 = unlist(sequences[[medication]][1,])
+      sequence1 = compactSequence(seq1)
+      seq2 = unlist(sequences[[medication]][2,])
+      sequence2 = compactSequence(seq2)
+      
+      #Statistics
+      ind = which(names(table(sequence1)) == "∅")
+      pat1.empty = table(sequence1)[ind]
+      ind = which(names(table(sequence1)) != "∅")
+      pat1.med = table(sequence1)[ind]
+      ind = which(names(table(seq1)) == "∅")
+      pat1.empty.orig = table(seq1)[ind]
+      ind = which(names(table(seq1)) != "∅")
+      pat1.med.orig = table(seq1)[ind]
+      
+      
+      ind = which(names(table(sequence2)) == "∅")
+      pat2.empty = table(sequence2)[ind]
+      ind = which(names(table(sequence2)) != "∅")
+      pat2.med = table(sequence2)[ind]
+      ind = which(names(table(seq2)) == "∅")
+      pat2.empty.orig = table(seq2)[ind]
+      ind = which(names(table(seq2)) != "∅")
+      pat2.med.orig = table(seq2)[ind]
+      
+      md = medalPairwise(sequence1, sequence2, FALSE)
+      distance = md$distance
+      size = length(md$alignment)
+      
+    }
+    
+    else{
+      if(rownames(sequences[[medication]]) == "patient1"){
+        
+        seq1 = unlist(sequences[[medication]][1,])
+        sequence1 = compactSequence(seq1)
+        
+        ind = which(names(table(sequence1)) == "∅")
+        pat1.empty = table(sequence1)[ind]
+        ind = which(names(table(sequence1)) != "∅")
+        pat1.med = table(sequence1)[ind]
+        ind = which(names(table(seq1)) == "∅")
+        pat1.empty.orig = table(seq1)[ind]
+        ind = which(names(table(seq1)) != "∅")
+        pat1.med.orig = table(seq1)[ind]
+        
+        distance = length(sequence1)
+        size = distance
+      }
+      else{
+        
+        seq2 = unlist(sequences[[medication]][1,])
+        sequence2 = compactSequence(seq2)
+        
+        ind = which(names(table(sequence2)) == "∅")
+        pat2.empty = table(sequence2)[ind]
+        ind = which(names(table(sequence2)) != "∅")
+        pat2.med = table(sequence2)[ind]
+        ind = which(names(table(seq2)) == "∅")
+        pat2.empty.orig = table(seq2)[ind]
+        ind = which(names(table(seq2)) != "∅")
+        pat2.med.orig = table(seq2)[ind]
+        
+        distance = length(sequence2)
+        size = distance
+      }
+    }
+    if(verbose == TRUE){
+    print(paste(medication, " [",
+                "patient1 = ", pat1.empty, " (", pat1.empty.orig,  ") ", 
+                pat1.med, " (", pat1.med.orig,")", ";  ",
+                "patient2 = ", pat2.empty, " (", pat2.empty.orig,  ") ", 
+                pat2.med,  " (", pat2.med.orig,")", ";  ",
+                "distance = ", distance, ";  ",
+                "size = ", size,
+                "]", sep=""))
+    }
+    medal.distance = medal.distance + (distance*size)
+    size.total = size.total + size
+    
+  }
+  
+  if(size.total > 0){
+    medal.distance = medal.distance / size.total
+  }
+  
+  return(medal.distance)
+  
+}
+
+
 

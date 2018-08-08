@@ -60,34 +60,28 @@ if(length(indexes) > 0 ){
 indexes = intersect(which(!is.na(data$start)), which(!is.na(data$end)))
 data = data[indexes,]
 
-#TODO: Update for all pairwise of patients
-#p1="patient1"
-#p2="patient2"
-p1=1
-p2=2
-pat1=data[which(data$patientID==p1),]
-pat2=data[which(data$patientID==p2),]
 
-sequences = getSequences(pat1, pat2)
+# Step 3. Create a distance matrix ----------------------
 
+distMatrix = as.data.frame(matrix(rep(0, length(patients)*length(patients)), nrow = length(patients)), stringsAsFactors = FALSE)
 
-# Step 3. Medication Alignment Algorithm (Medal) ----------------------
-
-medications = names(sequences)
-
-for(medication in medications){
-  
-  if(dim(sequences[[medication]])[1] == 2){
+for(i in 2:length(patients)){
+  for(j in 1:(i-1)){
     
-    seq = compactSequences(sequences[[medication]])
+    p1=patients[i]
+    p2=patients[j]
     
-    sequence1 = sequences[[medication]][1,]
-    sequence2 = sequences[[medication]][2,]
+    pat1=data[which(data$patientID==p1),]
+    pat2=data[which(data$patientID==p2),]
     
-    md = medalPairwise(sequence1, sequence2, TRUE)
-    print(paste(medication, " [distance = ", md$distance, 
-                ", size = ", length(md$alignment), "]",  sep =""))
-  } 
+    distance =  medalDistance(pat1, pat2)
+    
+    print(paste("[",i,",",j,"] = ", distance, sep=""))
+    distMatrix[i,j] = distance
+    distMatrix[j,i] = distance
+  }
 }
+
+# Step 4. Compute a dendrogram ----------------------
 
 
