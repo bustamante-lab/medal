@@ -2,13 +2,14 @@
 #
 # Project: Medication Alignment Algorithm (Medal)
 # Author: Arturo Lopez Pineda <arturolp@stanford.edu>
-# Date: Aug 3, 2018
+# Date: Aug 10, 2018
 #
 ###############################################################
 
 remove(list=ls())
 
 source("medal-functions.R")
+source("plot-functions.R")
 
 # Step 1. Read file --------------------------------------------------
 
@@ -60,6 +61,11 @@ if(length(indexes) > 0 ){
 indexes = intersect(which(!is.na(data$start)), which(!is.na(data$end)))
 data = data[indexes,]
 
+# Merge Prednisone (burst and maintenance)
+data[which(data$medication == "Prednisone burst"), "medication"] = "Prednisone"
+data[which(data$medication == "Maintenance prednisone"), "medication"] = "Prednisone"
+
+
 
 # Step 3. Create a distance matrix ----------------------
 
@@ -104,3 +110,23 @@ ggplot(ggd1, horiz = FALSE)
 clusterCut = cutree(dend, k)
 
 which(clusterCut==3)
+
+#TO DO:
+#Loop trugh the dendrogram
+
+# Step 5. Plot summary patients ----------------------
+patient1.label = 3
+patient2.label = 102
+ind.p1 = which(data$patientID==patient1.label)
+ind.p2 = which(data$patientID==patient2.label)
+
+patient1 = data[ind.p1,]
+patient2 = data[ind.p2,]
+
+#TO DO:
+patientIntersect = intersectPatients(patient1, patient2)
+patientUnion = unionPatients(patient1, patient2)
+patientAverage = averagePatients(patient1, patient2)
+
+#TO DO:
+plotPatientTimeline(patient1)
