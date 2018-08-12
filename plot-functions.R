@@ -26,45 +26,24 @@ mycolors <- c(
   #slateblue
 )
 
-#TO DO:
-getTimeline <- function(patient, firstAppointment, firstOnset){
-  timeline = c()
-  
-  #Obtain the grouping
-  pat$group = dictionary[as.character(pat[,umlsCol]), "Grouping"]
-  
-  #For end events == NA, add same day as start + 1
-  pat[is.na(pat[, endCol]), endCol] = pat[is.na(pat[, endCol]), startCol] + 1
-  
-  # add duration for all events and order
-  pat$duration = pat[,endCol] - pat[,startCol]
-  pat = pat[order(-pat$duration),]
-  
-  #Update values to adjust Clinical Values
-  pat$firstAppointment = pat$firstAppointment + firstOnset
-  pat$start = pat$start + firstOnset
-  pat$end = pat$end + firstOnset
-  
-  return(timeline)
-}
 
 #TO DO:
-plotPatientTimeline <- function(patient, firstAppointment, firstOnset, mycolors=mycolors){
-  timeline = getTimeline(patient, firstAppointment, firstOnset)
+plotPatientTimeline <- function(timeline, patient.label, firstAppointment, firstOnset, colors=mycolors){
   
-  max = max(unique(pat$year))
-  years = rev(paste("year", seq(1:max)))
+  #Update values to adjust Clinical Values
+  timeline$start = timeline$start + firstOnset
+  timeline$end = timeline$end + firstOnset
   
   #Plot
-  g <- ggplot(pat) + 
+  g <- ggplot(timeline) + 
     geom_segment(aes(x=start, xend=end, y=medication, yend=medication, colour=medication), 
                  size=8, lineend="butt") +
     scale_x_continuous(limits = c(floor(firstOnset/365)*365,ceiling(6570/365)*365), 
                        breaks=seq(floor(firstOnset/365)*365,6570+365,365),
                        labels=paste("year", seq(floor(firstOnset/365)*365,6570+365,365)/365),
                        expand = c(0, 0.5)) +
-    scale_y_discrete(limits = rev(mycodes)) +
-    ggtitle(paste("Patient ", patient, sep="")) +
+    scale_y_discrete(limits = rev(names(colors))) +
+    ggtitle(patient.label) +
     scale_color_manual(values=mycolors) +
     geom_vline(xintercept = firstOnset, linetype="dotted", color="red") +
     geom_vline(xintercept = firstAppointment, linetype="dashed") +
@@ -91,4 +70,36 @@ plotPatientTimeline <- function(patient, firstAppointment, firstOnset, mycolors=
   
 }
 
+
+unionPatients <- function(patient1, patient2){
+  patientU = rbind(patient1, patient2)
+  
+  return(patientU)
+}
+
+#TO DO:
+intersectPatients <- function(patient1, patient2){
+  patientU = c()
+  
+  medications = intersect(patient1$medication, patient2$medication)
+  for(medication in medications){
+    
+  }
+  return(patientU)
+}
+
+#TO DO:
+averagePatients <- function(patient1, patient2){
+  patientU = c()
+  
+  medications = unique(c(patient1$medication, patient2$medication))
+  for(medication in medications){
+    numRows.p1 = length(which(patient1$medication == medication))
+    numRows.p2 = length(which(patient2$medication == medication))
+    
+    print(paste(medication, numRows.p1, numRows.p2, sep=", "))
+  }
+  
+  return(patientU)
+}
 

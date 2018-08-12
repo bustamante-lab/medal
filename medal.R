@@ -26,6 +26,8 @@ source("plot-functions.R")
 
 
 events = read.csv("../medication/medsEvents.csv", stringsAsFactors = FALSE)
+clinical = read.csv("../clinical/clinicHistoryDeIdentified.csv", stringsAsFactors = FALSE)
+
 data=events[,c("id", "medication", "start", "end")]
 
 colnames(data) = c("patientID", "medication", "start", "end")
@@ -115,18 +117,35 @@ which(clusterCut==3)
 #Loop trugh the dendrogram
 
 # Step 5. Plot summary patients ----------------------
-patient1.label = 3
-patient2.label = 102
-ind.p1 = which(data$patientID==patient1.label)
-ind.p2 = which(data$patientID==patient2.label)
 
-patient1 = data[ind.p1,]
-patient2 = data[ind.p2,]
 
-#TO DO:
-patientIntersect = intersectPatients(patient1, patient2)
-patientUnion = unionPatients(patient1, patient2)
-patientAverage = averagePatients(patient1, patient2)
+patient1.ID = 3
+patient2.ID = 102
 
-#TO DO:
-plotPatientTimeline(patient1)
+patient1 = data[which(data$patientID==patient1.ID),]
+patient2 = data[which(data$patientID==patient2.ID),]
+
+#Get Clinical values firstAppointment and firstOnset
+cli1 = clinical[which(clinical[, "id"] == patient1.ID), ]
+cli2 = clinical[which(clinical[, "id"] == patient2.ID), ]
+
+firstAppointment.p1 = cli1$daysSinceBirth[1] - cli1$daysSinceFirstAppointment[1]
+firstOnset.p1 = cli1$daysSinceBirth[1] - cli1$daysPostOnset[1]
+
+firstAppointment.p2 = cli2$daysSinceBirth[1] - cli2$daysSinceFirstAppointment[1]
+firstOnset.p2 = cli2$daysSinceBirth[1] - cli2$daysPostOnset[1]
+
+firstAppointment = floor((firstAppointment.p1 + firstAppointment.p2) /2)
+firstOnset = floor((firstOnset.p1 + firstOnset.p2) / 2)
+
+#calculate a composite timeline
+#timeline = intersectPatients(patient1, patient2) #TO DO
+#timeline = unionPatients(patient1, patient2)
+timeline = averagePatients(patient1, patient2)
+
+#Get Label
+patient.list = paste(patient1.label, patient2.label, sep="-")
+patient.label = paste("Patient ", patient.list, sep="")
+
+#Plot
+plotPatientTimeline(timeline, patient.label, firstAppointment, firstOnset)
