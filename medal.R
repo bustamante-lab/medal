@@ -8,6 +8,8 @@
 
 remove(list=ls())
 
+
+
 source("medal-functions.R")
 source("plot-functions.R")
 
@@ -91,15 +93,15 @@ for(i in 2:length(patients)){
 }
 
 #write.csv(distMatrix, "../distance-matrix-medal.csv")
-distMatrix = read.csv("../distance-matrix-medal.csv")
+distMatrix = read.csv("../distance-matrix-medal.csv", row.names = 1)
 
 # Step 4. Compute a dendrogram ----------------------
 
 k = 12
 
-require(magrittr)
-require(ggplot2)
-require(dendextend)
+library(magrittr)
+library(ggplot2)
+library(dendextend)
 
 dend <- distMatrix %>% as.dist %>%
   hclust(method="complete") %>% as.dendrogram %>%
@@ -112,41 +114,51 @@ ggplot(ggd1, horiz = FALSE)
 
 clusterCut = cutree(dend, k)
 
-which(clusterCut==3)
+which(clusterCut==12)
+
+order.dendrogram(dend)
+
 
 #TO DO:
 #Loop trugh the dendrogram
 
 # Step 5. Plot summary patients ----------------------
 
+patient.order = c(3, 102, 65, 18)
 
-patient1.ID = 3
-patient2.ID = 102
+patient1.ID = patient.order[1]
+patient2.ID = patient.order[2]
 
+#For Patient 1
 patient1 = data[which(data$patientID==patient1.ID),]
-patient2 = data[which(data$patientID==patient2.ID),]
-
-#Get Clinical values firstAppointment and firstOnset
 cli1 = clinical[which(clinical[, "id"] == patient1.ID), ]
-cli2 = clinical[which(clinical[, "id"] == patient2.ID), ]
-
 firstAppointment.p1 = cli1$daysSinceBirth[1] - cli1$daysSinceFirstAppointment[1]
 firstOnset.p1 = cli1$daysSinceBirth[1] - cli1$daysPostOnset[1]
 
+#For Patient 2
+patient2 = data[which(data$patientID==patient2.ID),]
+cli2 = clinical[which(clinical[, "id"] == patient2.ID), ]
 firstAppointment.p2 = cli2$daysSinceBirth[1] - cli2$daysSinceFirstAppointment[1]
 firstOnset.p2 = cli2$daysSinceBirth[1] - cli2$daysPostOnset[1]
 
+#Update Values
 firstAppointment = floor((firstAppointment.p1 + firstAppointment.p2) /2)
 firstOnset = floor((firstOnset.p1 + firstOnset.p2) / 2)
 
 #calculate a composite timeline
-timeline = intersectPatients(patient1, patient2) #TO DO
+#timeline = intersectPatients(patient1, patient2)
 #timeline = unionPatients(patient1, patient2)
-#timeline = averagePatients(patient1, patient2)
+timeline = averagePatients(patient1, patient2)
 
 #Get Label
-#patient.list = paste(patient1.label, patient2.label, sep="-")
 patient.label = paste("Patient ", timeline$patientID[1], sep="")
 
 #Plot
 plotPatientTimeline(timeline, patient.label, firstAppointment, firstOnset)
+
+
+
+
+
+
+

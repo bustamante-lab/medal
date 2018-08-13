@@ -83,13 +83,14 @@ unionPatients <- function(patient1, patient2){
 
 #TO DO:
 intersectPatients <- function(patient1, patient2){
-  patientU = c()
+  patientU = data.frame(patientID=character(), medication=character(), start=numeric(), end=numeric())
   
   sequences = getSequences(patient1, patient2)
   
   patientID = paste(patient1$patientID[1], patient2$patientID[1], sep="-")
   
   medications = intersect(patient1$medication, patient2$medication)
+  
   for(medication in medications){
     
     med1 = sequences[[medication]][1,]
@@ -121,7 +122,7 @@ intersectPatients <- function(patient1, patient2){
           
           #assign row to patientU
           end = as.numeric(str_replace(colnames(combined)[current], "day", ""))
-          combinedMed = c(patientID, medication, start, end)
+          combinedMed = data.frame("patientID"=patientID, "medication"=medication, "start"=start, "end"=end)
           patientU = rbind(patientU, combinedMed)
           
           #update start
@@ -131,13 +132,17 @@ intersectPatients <- function(patient1, patient2){
       }
       ind = letterSequence[length(letterSequence)]
       end = as.numeric(str_replace(colnames(combined)[ind], "day", ""))
-      combinedMed = c(patientID, medication, start, end)
+      combinedMed = data.frame("patientID"=patientID, "medication"=medication, "start"=start, "end"=end)
       patientU = rbind(patientU, combinedMed)
       
     }
     
   }
   
+  if(length(patientU)==0){
+    patientU = data.frame(patientID=character(), medication=character(), start=numeric(), end=numeric())
+    return(patientU)
+  }
   colnames(patientU) = colnames(patient1)
   rownames(patientU) = NULL
   patientU = data.frame(patientU, stringsAsFactors=FALSE)
@@ -148,17 +153,45 @@ intersectPatients <- function(patient1, patient2){
   return(patientU)
 }
 
+
 #TO DO:
 averagePatients <- function(patient1, patient2){
   patientU = intersectPatients(patient1, patient2)
+  #patientU = data.frame(patientID=character(), medication=character(), start=numeric(), end=numeric())
+  
+  
+  patientID = paste(patient1$patientID[1], patient2$patientID[1], sep="-")
   
   #TO DO:
   medications = unique(c(patient1$medication, patient2$medication))
+  medications = medications[order(medications)]
   for(medication in medications){
-    numRows.p1 = length(which(patient1$medication == medication))
-    numRows.p2 = length(which(patient2$medication == medication))
+    med.p1 = patient1[which(patient1$medication == medication),]
+    med.p2 = patient2[which(patient2$medication == medication),]
+    numRows.p1 = dim(med.p1)[1]
+    numRows.p2 = dim(med.p2)[1]
+    numRows.pU = ceiling((numRows.p1+numRows.p2)/2)
     
-    print(paste(medication, numRows.p1, numRows.p2, sep=", "))
+    # Create new combined rows
+    for(i in 1:numRows.pU){
+      if(i <= numRows.p1 && i <= numRows.p2){ #Both patients
+        start = ceiling((med.p1[i,"start"]+med.p2[i,"start"])/2)
+        end = ceiling((med.p1[i,"end"]+med.p2[i,"end"])/2)
+      } else if(i <= numRows.p1 && i > numRows.p2){ #Only patient1
+        dif = round((med.p1[i,"end"] - med.p1[i,"start"])/4)
+        start = med.p1[i,"start"] + dif
+        end = med.p1[i,"end"] - dif
+      } else if(i > numRows.p1 && i <= numRows.p2){ #Only patient2
+        dif = round((med.p2[i,"end"] - med.p2[i,"start"])/4)
+        start = med.p2[i,"start"] + dif
+        end = med.p2[i,"end"] - dif
+      }
+      
+      combinedMed = data.frame("patientID"=patientID, "medication"=medication, "start"=start, "end"=end)
+      patientU = rbind(patientU, combinedMed)
+    }
+    
+    #print(paste(medication, numRows.p1, numRows.p2, numRows.pU, sep=", "))
   }
   
   return(patientU)
