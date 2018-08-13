@@ -91,6 +91,7 @@ for(i in 2:length(patients)){
 }
 
 #write.csv(distMatrix, "../distance-matrix-medal.csv")
+distMatrix = read.csv("../distance-matrix-medal.csv")
 
 # Step 4. Compute a dendrogram ----------------------
 
@@ -139,13 +140,13 @@ firstAppointment = floor((firstAppointment.p1 + firstAppointment.p2) /2)
 firstOnset = floor((firstOnset.p1 + firstOnset.p2) / 2)
 
 #calculate a composite timeline
-#timeline = intersectPatients(patient1, patient2) #TO DO
+timeline = intersectPatients(patient1, patient2) #TO DO
 #timeline = unionPatients(patient1, patient2)
-timeline = averagePatients(patient1, patient2)
+#timeline = averagePatients(patient1, patient2)
 
 #Get Label
-patient.list = paste(patient1.label, patient2.label, sep="-")
-patient.label = paste("Patient ", patient.list, sep="")
+#patient.list = paste(patient1.label, patient2.label, sep="-")
+patient.label = paste("Patient ", timeline$patientID[1], sep="")
 
 #Plot
 plotPatientTimeline(timeline, patient.label, firstAppointment, firstOnset)
