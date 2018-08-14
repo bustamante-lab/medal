@@ -103,61 +103,94 @@ library(magrittr)
 library(ggplot2)
 library(dendextend)
 
+mybranch.colors
+
+library(RColorBrewer)
+n=8
+color.vector = rep(brewer.pal(n, "Dark2"), ceiling(k/n))
+color.vector = color.vector[1:k]
+
+
 dend <- distMatrix %>% as.dist %>%
   hclust(method="complete") %>% as.dendrogram %>%
-  set("branches_k_color", k = k) %>% set("branches_lwd", 0.7) %>%
-  set("labels_cex", 0.6) %>% set("labels_colors", k = k) %>%
-  set("leaves_pch", 19) %>% set("leaves_cex", 0.5) 
+  set("branches_k_color", value = color.vector, k = k) %>% set("branches_lwd", 0.7) %>%
+  set("labels_cex", 0.6) %>% set("labels_colors", value = color.vector, k = k) %>%
+  set("leaves_pch", 19) %>% set("leaves_cex", 0.5)
+  #collapse_branch(tol = 11)  %>% hang.dendrogram(hang = 0)
 ggd1 <- as.ggdend(dend)
-ggplot(ggd1, horiz = FALSE)
-
+ggplot(ggd1, horiz = FALSE) 
 
 clusterCut = cutree(dend, k)
 
-which(clusterCut==12)
-
-order.dendrogram(dend)
+order = order.dendrogram(dend)
 
 
-#TO DO:
-#Loop trugh the dendrogram
 
 # Step 5. Plot summary patients ----------------------
 
-patient.order = c(3, 102, 65, 18)
 
-patient1.ID = patient.order[1]
-patient2.ID = patient.order[2]
+#TO DO:
+#Loop trugh the dendrogram inorder (using the tree structure)
+#for(i in 1:length(dend)){
+#  attr(dend[[i]], "members")
+#  print(length(dend[[i]]))
+#}
 
-#For Patient 1
-patient1 = data[which(data$patientID==patient1.ID),]
-cli1 = clinical[which(clinical[, "id"] == patient1.ID), ]
-firstAppointment.p1 = cli1$daysSinceBirth[1] - cli1$daysSinceFirstAppointment[1]
-firstOnset.p1 = cli1$daysSinceBirth[1] - cli1$daysPostOnset[1]
+#TO DO:
+for(i in 1:k){
+  patient.order = names(clusterCut[which(clusterCut==i)])
+  patient.order = order[which(order %in% patient.order)]
+  clusterName = paste("Cluster",i,"patients", paste(patient.order,collapse="-"), sep="-")
+  print(clusterName)
+  
+  #For Patient 1
+  patient1.ID = patient.order[1]
+  patient1 = data[which(data$patientID==patient1.ID),]
+  cli1 = clinical[which(clinical[, "id"] == patient1.ID), ]
+  firstAppointment.p1 = cli1$daysSinceBirth[1] - cli1$daysSinceFirstAppointment[1]
+  firstOnset.p1 = cli1$daysSinceBirth[1] - cli1$daysPostOnset[1]
+  
+  for(j in 1:(length(patient.order)-1)){
+    
+    #For Patient 2
+    patient2.ID = patient.order[j+1]
+    patient2 = data[which(data$patientID==patient2.ID),]
+    cli2 = clinical[which(clinical[, "id"] == patient2.ID), ]
+    firstAppointment.p2 = cli2$daysSinceBirth[1] - cli2$daysSinceFirstAppointment[1]
+    firstOnset.p2 = cli2$daysSinceBirth[1] - cli2$daysPostOnset[1]
+    
+    #Update Values
+    firstAppointment = floor((firstAppointment.p1 + firstAppointment.p2) /2)
+    firstOnset = floor((firstOnset.p1 + firstOnset.p2) / 2)
+    
+    #calculate a composite timeline
+    #timeline = intersectPatients(patient1, patient2)
+    #timeline = unionPatients(patient1, patient2)
+    timeline = averagePatients(patient1, patient2)
+    
+    #update patient1
+    patient1 = timeline
+    firstAppointment.p1 = firstAppointment
+    firstOnset.p1 = firstOnset
+  }
+  
+  #Get Label
+  patient.label = paste("Patient ", patient1$patientID[1], sep="")
+  
+  #Plot
+  g <- plotPatientTimeline(patient1, patient.label, firstAppointment, firstOnset)
+  #patient.timeline = paste("../images/cluster-union/",clusterName,".png", sep="")
+  #patient.timeline = paste("../images/cluster-intersect/",clusterName,".png", sep="")
+  patient.timeline = paste("../images/cluster-average/", clusterName,".png", sep="")
+  ggsave(patient.timeline, width = 8, height = 6, dpi=300)
+}
 
-#For Patient 2
-patient2 = data[which(data$patientID==patient2.ID),]
-cli2 = clinical[which(clinical[, "id"] == patient2.ID), ]
-firstAppointment.p2 = cli2$daysSinceBirth[1] - cli2$daysSinceFirstAppointment[1]
-firstOnset.p2 = cli2$daysSinceBirth[1] - cli2$daysPostOnset[1]
 
-#Update Values
-firstAppointment = floor((firstAppointment.p1 + firstAppointment.p2) /2)
-firstOnset = floor((firstOnset.p1 + firstOnset.p2) / 2)
+  
 
-#calculate a composite timeline
-#timeline = intersectPatients(patient1, patient2)
-#timeline = unionPatients(patient1, patient2)
-timeline = averagePatients(patient1, patient2)
-
-#Get Label
-patient.label = paste("Patient ", timeline$patientID[1], sep="")
-
-#Plot
-plotPatientTimeline(timeline, patient.label, firstAppointment, firstOnset)
-
-
-
+  
+  
+  
 
 
 

@@ -76,7 +76,10 @@ plotPatientTimeline <- function(timeline, patient.label, firstAppointment, first
 
 
 unionPatients <- function(patient1, patient2){
+  patientID = paste(patient1$patientID[1], patient2$patientID[1], sep="-")
+  
   patientU = rbind(patient1, patient2)
+  patientU[,"patientID"] = patientID
   
   return(patientU)
 }
@@ -146,6 +149,7 @@ intersectPatients <- function(patient1, patient2){
   colnames(patientU) = colnames(patient1)
   rownames(patientU) = NULL
   patientU = data.frame(patientU, stringsAsFactors=FALSE)
+  patientU$medication = as.character(patientU$start)
   patientU$start = as.numeric(as.character(patientU$start))
   patientU$end = as.numeric(as.character(patientU$end))
   
@@ -163,7 +167,7 @@ averagePatients <- function(patient1, patient2){
   patientID = paste(patient1$patientID[1], patient2$patientID[1], sep="-")
   
   #TO DO:
-  medications = unique(c(patient1$medication, patient2$medication))
+  medications = unique(c(as.character(patient1$medication), as.character(patient2$medication)))
   medications = medications[order(medications)]
   for(medication in medications){
     med.p1 = patient1[which(patient1$medication == medication),]
@@ -193,6 +197,9 @@ averagePatients <- function(patient1, patient2){
     
     #print(paste(medication, numRows.p1, numRows.p2, numRows.pU, sep=", "))
   }
+  
+  patientU$medication = as.character(patientU$start)
+  
   
   return(patientU)
 }
