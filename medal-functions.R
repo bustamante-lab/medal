@@ -402,7 +402,8 @@ medalDistance <- function(pat1, pat2, verbose = FALSE){
       seq1 = unlist(sequences[[medication]][1,])
       sequence1 = compactSequence(seq1)
       seq2 = unlist(sequences[[medication]][2,])
-      sequence2 = compactSequence(seq2)
+      #sequence2 = compactSequence(seq2)
+      sequence2 = seq2
       
       #Statistics
       ind = which(names(table(sequence1)) == "∅")
