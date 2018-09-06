@@ -6,6 +6,7 @@
 #
 ###############################################################
 
+
 remove(list=ls())
 
 
@@ -23,14 +24,16 @@ source("plot-functions.R")
 #                               "patient2","clindamycin", 3, 5,
 #                               "patient2","clindamycin", 8, 10,
 #                               "patient2","amoxicillin", 4, 5,
-#                               "patient2","amoxicillin", 9, 10),
+#                               "patient2","amoxicillin", 7, 9),
 #                             nrow=9, ncol=4, byrow=TRUE))
 
 
-events = read.csv("../medication/medsEvents.csv", stringsAsFactors = FALSE)
-clinical = read.csv("../clinical/clinicHistoryDeIdentified.csv", stringsAsFactors = FALSE)
+events = read.csv("medsEvents.csv", stringsAsFactors = FALSE)
+clinical = read.csv("medsDictonary.csv", stringsAsFactors = FALSE)
 
 data=events[,c("id", "medication", "start", "end")]
+
+
 
 colnames(data) = c("patientID", "medication", "start", "end")
 
@@ -65,10 +68,10 @@ if(length(indexes) > 0 ){
 indexes = intersect(which(!is.na(data$start)), which(!is.na(data$end)))
 data = data[indexes,]
 
+
 # Merge Prednisone (burst and maintenance)
 data[which(data$medication == "Prednisone burst"), "medication"] = "Prednisone"
 data[which(data$medication == "Maintenance prednisone"), "medication"] = "Prednisone"
-
 
 
 # Step 3. Create a distance matrix ----------------------
@@ -91,6 +94,8 @@ for(i in 2:length(patients)){
     distMatrix[j,i] = distance
   }
 }
+
+
 
 #write.csv(distMatrix, "../distance-matrix-medal.csv")
 distMatrix = read.csv("../distance-matrix-medal.csv", row.names = 1)
