@@ -103,7 +103,7 @@ intersectPatients <- function(patient1, patient2){
     
     #Assign a value where both are the same
     indSameLetter = intersect(which(med1==med2), which(med1 != '∅'))
-    if(length(indSameLetter)>0){
+    if(length(indSameLetter)>1){
       
       #Create an empty matrix
       combined = as.data.frame(matrix(rep('∅', size), nrow = 1), stringsAsFactors = FALSE)
@@ -138,7 +138,11 @@ intersectPatients <- function(patient1, patient2){
       combinedMed = data.frame("patientID"=patientID, "medication"=medication, "start"=start, "end"=end)
       patientU = rbind(patientU, combinedMed)
       
+    } else if(length(indSameLetter)==1){ #just one letter
+      combinedMed = data.frame("patientID"=patientID, "medication"=medication, "start"=indSameLetter, "end"=indSameLetter)
+      patientU = rbind(patientU, combinedMed)
     }
+    
     
   }
   
@@ -149,9 +153,10 @@ intersectPatients <- function(patient1, patient2){
   colnames(patientU) = colnames(patient1)
   rownames(patientU) = NULL
   patientU = data.frame(patientU, stringsAsFactors=FALSE)
-  patientU$medication = as.character(patientU$start)
+  patientU$medication = as.character(patientU$medication)
   patientU$start = as.numeric(as.character(patientU$start))
   patientU$end = as.numeric(as.character(patientU$end))
+  patientU$patientID = as.character(patientU$patientID)
   
   
   return(patientU)
@@ -198,9 +203,54 @@ averagePatients <- function(patient1, patient2){
     #print(paste(medication, numRows.p1, numRows.p2, numRows.pU, sep=", "))
   }
   
-  patientU$medication = as.character(patientU$start)
+  patientU$medication = as.character(patientU$medication)
+  patientU$patientID = as.character(patientU$patientID)
   
   
   return(patientU)
 }
+
+
+plotGI <- function(gi_score){
+  
+  if(typeof(gi_score) == "integer"){
+    gi_score$id = paste("Patient", as.character(gi_score$id))
+  }
+  maxDay = max(gi_score$daysSinceFirstAppointment)
+  
+  gi_new <- ggplot(data = gi_score, aes(x = daysSinceFirstAppointment,  y = gi_new)) +
+    geom_point(color="gray30", size=0.8) +
+    geom_smooth(aes(group=id), color="gray50", method = "loess", size=0.5, se=FALSE, fill="gray82", alpha=0.5) +
+    geom_smooth(method = "loess", size=2, se=TRUE, fill="gray82", alpha=0.5) +
+    scale_y_continuous(limits = c(0, 100), expand=c(0,0)) +
+    scale_x_continuous(limits = c(0, maxDay) , 
+                       breaks=seq(0,(maxDay+365),365),
+                       labels=paste("year", seq(0,(maxDay+365),365)/365),
+                       expand = c(0, 0)) +
+    theme(#Add a title
+      plot.title = element_text(hjust = 0.5, size=15),
+      #Remove elements
+      #legend.position="right", 
+      legend.position="none", 
+      legend.title = element_blank(),
+      axis.title.x=element_blank(),
+      axis.text.x=element_blank(),
+      axis.ticks.x=element_blank(),
+      #axis.text.x=element_text(angle=90, vjust=0.5),
+      #axis.title.y=element_blank(),
+      #axis.ticks.y=element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      # Force the plot into a rectangle aspect ratio
+      #aspect.ratio = 0.3,
+      #Add a border
+      panel.border = element_rect(colour = "black", fill=NA, size=1)
+    )
+  
+  return(gi_new)
+}
+
+
+
 

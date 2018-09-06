@@ -9,10 +9,13 @@
 
 remove(list=ls())
 
-
+library(magrittr)
+library(ggplot2)
+library(dendextend)
 
 source("medal-functions.R")
 source("plot-functions.R")
+
 
 # Step 1. Read file --------------------------------------------------
 
@@ -104,9 +107,7 @@ distMatrix = read.csv("../distance-matrix-medal.csv", row.names = 1)
 
 k = 12
 
-library(magrittr)
-library(ggplot2)
-library(dendextend)
+
 
 mybranch.colors
 
@@ -135,13 +136,13 @@ order = order.dendrogram(dend)
 
 
 #TO DO:
-#Loop trugh the dendrogram inorder (using the tree structure)
+#Loop through the dendrogram inorder (using the tree structure)
 #for(i in 1:length(dend)){
 #  attr(dend[[i]], "members")
 #  print(length(dend[[i]]))
 #}
 
-#TO DO:
+#Loop through the clusters
 for(i in 1:k){
   patient.order = names(clusterCut[which(clusterCut==i)])
   patient.order = order[which(order %in% patient.order)]
@@ -177,26 +178,96 @@ for(i in 1:k){
     patient1 = timeline
     firstAppointment.p1 = firstAppointment
     firstOnset.p1 = firstOnset
+    if(dim(patient1)[1] ==0){
+      break()
+    }
   }
   
-  #Get Label
-  patient.label = paste("Patient ", patient1$patientID[1], sep="")
-  
-  #Plot
-  g <- plotPatientTimeline(patient1, patient.label, firstAppointment, firstOnset)
-  #patient.timeline = paste("../images/cluster-union/",clusterName,".png", sep="")
-  #patient.timeline = paste("../images/cluster-intersect/",clusterName,".png", sep="")
-  patient.timeline = paste("../images/cluster-average/", clusterName,".png", sep="")
-  ggsave(patient.timeline, width = 8, height = 6, dpi=300)
+  if(dim(patient1)[1] > 0){
+    #Get Label
+    if(nchar(patient1$patientID[1])>30){
+      patient.label = paste("Cluster ", i, sep="")
+      clusterName = paste("Cluster", i, sep="")
+    } else{
+      patient.label = paste("Patient ", timeline$patientID[1], sep="")
+    }
+    
+    #Plot
+    
+    g <- plotPatientTimeline(patient1, patient.label, firstAppointment, firstOnset)
+    #patient.timeline = paste("../images/cluster-union/",clusterName,".png", sep="")
+    #patient.timeline = paste("../images/cluster-intersect/",clusterName,".png", sep="")
+    patient.timeline = paste("../images/cluster-average/", clusterName,".png", sep="")
+    ggsave(patient.timeline, width = 8, height = 6, dpi=300)
+  }
 }
 
 
+# Step 6. Plot correlation triangles ----------------------
+
+#oral anti-inflammatorics
+A <- c("NSAID", "Prednisone")
+
+#IV therapies
+B <- c("IVIG", "Rituximab", "Solumedrol")
+
+#Antibiotics Amoxicillin
+C <- c("Augmentin", "Amoxicillin")
+
+#Antibiotics Ceph+Lide
+D <- c("Cefadroxil", "Clindamycin", "Azithromycin", "Cephalexin")
+
+medications = list(A=A,B=B,C=C,D=D)
+
+for(clust in 1:k){
+  patients = names(clusterCut[which(clusterCut==clust)])
+  patients = order[which(order %in% patients)]
+  clusterName = paste("Cluster",clust,"patients", paste(patients,collapse="-"), sep="-")
+  print(clusterName)
   
-
+  #Get data for the entire cluster
+  cluster = data[which(data$patientID %in% patients),]
   
+  #Create an empty matrix
+  interactions = as.data.frame(matrix("",4,4), stringsAsFactors = FALSE)
+  rownames(interactions) = names(medications)
+  colnames(interactions) = names(medications)
   
+  #Fill in values
+  for(col in 1:length(medications)){
+    for(row in col:length(medications)){
+      medsRow = medications[[row]]
+      medsCol = medications[[col]]
+      pats = 0
+      for(p in patients){
+        indRow = which((data$patientID %in% p) & (data$medication %in% medsRow))
+        indCol = which((data$patientID %in% p) & (data$medication %in% medsCol))
+        if(length(indRow)>0 & length(indCol)>0){
+          #pats = pats + (length(indRow) + length(indCol))/2
+          pats = pats + 1
+        }
+      }
+      interactions[row,col]=round(pats/length(patients), digits=1)
+    }
+  }
   
+  print(interactions)
+}
 
 
+# Step 6. Plot the impairment scores ----------------------
 
+for(clust in 1:k){
+ 
+  patients = names(clusterCut[which(clusterCut==clust)])
+  patients = order[which(order %in% patients)]
+  clusterName = paste("Cluster",clust, sep="-")
+  print(clusterName)
+  
+  #Get data for the cluster: Global Impairment Score
+  gi_score = clinical[which(clinical$id %in% patients),c("id", "gi_new", "daysPostOnset", "daysSinceBirth", "daysSinceFirstAppointment")]
 
+  g <- plotGI(gi_score)
+  patient.timeline = paste("../images/cluster-gi-score/", clusterName,".png", sep="")
+  ggsave(patient.timeline, width = 8, height = 8, dpi=300)
+}
