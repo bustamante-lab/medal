@@ -5,8 +5,9 @@ Medication Alignment Algorithm
 ## Citation
 For citation and more information refer to:
 
->A.L. Pineda et al. "Medal, a medication alignment algorithm to facilitate exploration of treatment strategies: a longitudinal cohort study in pediatric patients with acute neuropsychiatric syndrome" (in preparation).
+>A. Lopez Pineda et al. (2019) "Patient similarity in the longitudinal care of patients with polypharmacy treatment" (in preparation)
 
 
 ## Current development status
-This package is in development by Arturo Lopez Pineda, PhD (arturolp @ stanford.edu)
+This package is in development by Arturo Lopez Pineda (arturolp @ stanford.edu)
+PyMedal developed by Armin Pourshafeie (apoursh @ stanford.edu)
