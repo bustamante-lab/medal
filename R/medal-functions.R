@@ -5,7 +5,7 @@
 # Date: July 28, 2018
 #
 ###############################################################
-
+library(compiler)
 matrixInitialization <- function(sequence1, sequence2){
   
   n = length(sequence1)
@@ -20,7 +20,7 @@ matrixInitialization <- function(sequence1, sequence2){
 }
 
 
-matrixFill <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
+matrixFill_uncompiled <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
   
   n = dim(edit.matrix)[1] #last column 
   m = dim(edit.matrix)[2] #last row
@@ -66,12 +66,12 @@ matrixFill <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
       contMedV = (letterV2 == char && letterV1 == char)
       
       #End of medication
-      endMedH = (letterH2 == '∅' && letterH1 != '∅')
-      endMedV = (letterV2 == '∅' && letterV1 != '∅')
+      endMedH = (letterH2 == '∅' && letterH1 != '∅') && letterH1 != "" ## NOTE
+      endMedV = (letterV2 == '∅' && letterV1 != '∅')  && letterV1 != ""
       
       #Continuing gap
-      contGapH = (letterH2 == '∅' && letterH1 == '∅')
-      contGapV = (letterV2 == '∅' && letterV1 == '∅')
+      contGapH = (letterH2 == '∅' && (letterH1 == '∅' || letterH1 == ""))
+      contGapV = (letterV2 == '∅' && (letterV1 == '∅' || letterV1 == "" ))
       
       #Initialize values
       cellValue = -1
@@ -86,27 +86,27 @@ matrixFill <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
          (contGapH == TRUE && contGapV == TRUE)) {
         cellValue = min(neighbors)
         direction = 2 #diag
-      }
+      
       #Scenario switching ------------------
-      else if((startMedH == TRUE && contMedV == TRUE) ||
+      } else if((startMedH == TRUE && contMedV == TRUE) ||
               (contMedH == TRUE && startMedV == TRUE) ||
-              (contMedH == TRUE && endMedV == TRUE) ||
-              (endMedH == TRUE && contMedV == TRUE) ||
-              (endMedH == TRUE && contGapV == TRUE) ||
-              (contGapH == TRUE && endMedV == TRUE)) {
+              (contMedH == TRUE && endMedV == TRUE  ) ||
+              (endMedH == TRUE && contMedV == TRUE  ) ||
+              (endMedH == TRUE && contGapV == TRUE  ) ||
+              (contGapH == TRUE && endMedV == TRUE  )) {
         cellValue = max(neighbors)
         direction = which(neighbors == max(neighbors))[1]
-      }
+      
       #Opposite scenario ------------------
-      else if((startMedH == TRUE && endMedV == TRUE) ||
+      } else if((startMedH == TRUE && endMedV == TRUE) ||
               (contMedH == TRUE && contGapV == TRUE) ||
               (endMedH == TRUE && startMedV == TRUE) ||
               (contGapH == TRUE && contMedV == TRUE)) {
         cellValue = max(neighbors) + 1
         direction = which(neighbors == max(neighbors))[1]
-      }
+      
       #Gap involved ------------------
-      else if((startMedH == TRUE && contGapV == TRUE) ||
+      } else if((startMedH == TRUE && contGapV == TRUE) ||
               (contGapH == TRUE && startMedV == TRUE)) {
         cellValue = min(neighbors) + 1
         direction = which(neighbors == min(neighbors))[1]
@@ -134,6 +134,7 @@ matrixFill <- function(edit.matrix, arrow.matrix, arrow.labels, time=TRUE){
   return(list(edit=edit.matrix, arrow=arrow.matrix))
 }
 
+matrixFill <- cmpfun(matrixFill_uncompiled)
 
 matrixTraceback <- function(edit.matrix){
   i = dim(edit.matrix)[1] #last column 
@@ -159,8 +160,7 @@ matrixTraceback <- function(edit.matrix){
       j = j - 1
       nseq1 = c(letterH2, nseq1)
       nseq2 = c(letterV2, nseq2)
-    }
-    else{ #left or top? 
+    } else{ #left or top? 
       
       if(i==1){
         direction = "left"
@@ -245,6 +245,8 @@ medalPairwise <- function(sequence1, sequence2, verbose=FALSE) {
   }
   return(list(distance=distance, alignment=alignment))
 }
+
+
 
 
 getSequences <- function(pat1, pat2) {
@@ -378,7 +380,6 @@ compactSequence <- function(sequence) {
 }
 
 medalDistance <- function(pat1, pat2, verbose = FALSE){
-  
   medal.distance = 0
   size.total = 0
   
@@ -480,6 +481,7 @@ medalDistance <- function(pat1, pat2, verbose = FALSE){
                 "]", sep=""))
     }
     medal.distance = medal.distance + (distance*size)
+  
     size.total = size.total + size
     
   }
@@ -487,9 +489,7 @@ medalDistance <- function(pat1, pat2, verbose = FALSE){
   if(size.total > 0){
     medal.distance = medal.distance / size.total
   }
-  
   return(medal.distance)
-  
 }
 
 

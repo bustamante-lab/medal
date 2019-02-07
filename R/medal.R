@@ -6,6 +6,7 @@
 #
 ###############################################################
 
+
 remove(list=ls())
 
 library(magrittr)
@@ -28,10 +29,11 @@ source("plot-functions.R")
 #                               "patient2","clindamycin", 3, 5,
 #                               "patient2","clindamycin", 8, 10,
 #                               "patient2","amoxicillin", 4, 5,
-#                               "patient2","amoxicillin", 9, 10),
+#                               "patient2","amoxicillin", 7, 9),
 #                             nrow=9, ncol=4, byrow=TRUE))
 
 
+<<<<<<< HEAD:R/medal.R
 # data = as.data.frame(matrix(c("1","Azithromycin", 1981,2014,
 #                                "1","Azithromycin",2079,2135,
 #                                "2","Azithromycin",1232,1237,
@@ -43,6 +45,15 @@ clinical = read.csv("../clinical/clinicHistoryDeIdentified.csv", stringsAsFactor
 coordination = read.csv("../clinical/data-matrix-coordination.csv", stringsAsFactors = FALSE)
 
 data=events[,c("id", "medication", "start", "end")]
+=======
+events = read.csv("medsEvents.csv", stringsAsFactors = FALSE)
+clinical = read.csv("medsDictonary.csv", stringsAsFactors = FALSE)
+
+data=events[,c("id", "medication", "start", "end")]
+
+
+
+>>>>>>> origin/master:medal.R
 colnames(data) = c("patientID", "medication", "start", "end")
 
 # Step 2. Get patients and medications ------------------------------
@@ -76,13 +87,17 @@ if(length(indexes) > 0 ){
 indexes = intersect(which(!is.na(data$start)), which(!is.na(data$end)))
 data = data[indexes,]
 
+
 # Merge Prednisone (burst and maintenance)
 data[which(data$medication == "Prednisone burst"), "medication"] = "Prednisone"
 data[which(data$medication == "Maintenance prednisone"), "medication"] = "Prednisone"
 
 
+<<<<<<< HEAD:R/medal.R
 write.csv(data, "../clinical/data-matrix-clean.csv")
 
+=======
+>>>>>>> origin/master:medal.R
 # Step 3. Create a distance matrix ----------------------
 
 distMatrix = as.data.frame(matrix(rep(0, length(patients)*length(patients)), nrow = length(patients)), stringsAsFactors = FALSE)
@@ -103,6 +118,8 @@ for(i in 2:length(patients)){
     distMatrix[j,i] = distance
   }
 }
+
+
 
 #write.csv(distMatrix, "../distance-matrix-medal.csv")
 #distMatrix = read.csv("../distance-matrix-medal.csv", row.names = 1)
