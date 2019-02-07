@@ -1,5 +1,5 @@
 ################################################################################
-## Medal algorithm Described in: Medication Usage Similarity in Patients with ##
+## Medal algorithm Described in: Medication Usage Similarity in Oatients with ##
 ## Acute-onset Neuropsychiatric Syndrome (Pineda, et. al.)                    ##
 ##                                                                            ##
 ## Implemented by Armin Pourshafeie                                           ##
@@ -35,7 +35,7 @@ def dataQC(dataName):
     Returns:
         dataframe with the cleaned up usage data."""
 
-    events = pd.read_csv('medsEvents.csv')
+    events = pd.read_csv(dataName)
     data = events.loc[:, ["id", "medication", "start", "end"]]
     del events
     # Deal with missing data
@@ -320,7 +320,6 @@ def medalDistance(patientInfo):
                 dist   += days * days
                 size   += days
             distMat[i,j] = dist/float(size)
-            #print(dist/float(size))
             counter += 1
             if counter == update_step:
                 pbar.update(1)
@@ -365,9 +364,12 @@ if __name__=="__main__":
     if len(args) < 2 or len(args) > 2:
         print (usage)
         print ("""pymedal only takes a single argument""")
+        sys.exit(1)
     dataFile = args[1]
     if not os.path.isfile(dataFile):
         print (usage)
         print ("{} is not a file".format(dataFile))
+        sys.exit(1)
 
     medal(dataFile)
+
