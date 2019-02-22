@@ -9,5 +9,4 @@ For citation and more information refer to:
 
 
 ## Current development status
-This package is in development by Arturo Lopez Pineda (arturolp @ stanford.edu)
-PyMedal developed by Armin Pourshafeie (apoursh @ stanford.edu)
+This package is in development by Arturo Lopez Pineda (arturolp[at]stanford[dot]edu), PyMedal was developed by Armin Pourshafeie (apoursh[at]stanford[dot]edu)
