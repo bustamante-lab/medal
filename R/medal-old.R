@@ -2,7 +2,7 @@
 #
 # Project: Medication Alignment Algorithm (Medal)
 # Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)
-# Date: Feb 21, 2019
+# Date: August 2018
 #
 ###############################################################
 
@@ -16,58 +16,82 @@ library(factoextra)
 library(NbClust)
 
 source("medal-functions.R")
-source("support-functions.R")
 source("plot-functions.R")
 
 
 # Step 1. Read file --------------------------------------------------
 
+# data = as.data.frame(matrix(c("patient1","clindamycin", 1, 3,
+#                               "patient1","clindamycin", 6, 8,
+#                               "patient1","amoxicillin", 2, 3,
+#                               "patient1","amoxicillin", 5, 6,
+#                               "patient1","amoxicillin", 8, 9,
+#                               "patient2","clindamycin", 3, 5,
+#                               "patient2","clindamycin", 8, 10,
+#                               "patient2","amoxicillin", 4, 5,
+#                               "patient2","amoxicillin", 7, 9),
+#                             nrow=9, ncol=4, byrow=TRUE))
 
 
-#---
-#File with patient ID (de-ID), comorbidities, initial clinical presentation, etc.
-profiles = read.csv("../../clinical/data-matrix-profiles.csv", stringsAsFactors = FALSE)
+# data = as.data.frame(matrix(c("1","Azithromycin", 1981,2014,
+#                                "1","Azithromycin",2079,2135,
+#                                "2","Azithromycin",1232,1237,
+#                                "2","Azithromycin",1395,1395),
+#                              nrow=4, ncol=4, byrow=TRUE))
 
-#Variables for stratification
-strats <- c("is_male", "NHW", "OCD", "foodprob", "anx", 
-            "emotional", "mood", "agg", "sch", "reg", "sleep", "tics")
+events = read.csv("../medication/meddrug-12-2018.csv", stringsAsFactors = FALSE)
+clinical = read.csv("../clinical/clinicHistoryDeIdentified.csv", stringsAsFactors = FALSE)
+coordination = read.csv("../clinical/data-matrix-coordination.csv", stringsAsFactors = FALSE)
 
-#Select only a few columns
-profiles = profiles[,c("id", "age_onset", "age_1st_appt", strats)]
+data=events[,c("id", "medication", "start", "end")]
 
-#Get unique patient IDs ordered
-patients = sort(unique(profiles$id))
+events = read.csv("medsEvents.csv", stringsAsFactors = FALSE)
+clinical = read.csv("medsDictonary.csv", stringsAsFactors = FALSE)
 
-#---
-#File with events
-events = read.csv("../../medication/meddrug-12-2018.csv", stringsAsFactors = FALSE)
-
-#Only select rows for the same patients listed in Profiles
-rows = which(events$id %in% patients)
-
-#Select only a few columns
-events = events[rows,c("id", "medication", "start", "end")]
-
-#---
-#File with clinical evaluations (outcomes)
-outcomes = read.csv("../../clinical/data-matrix-outcomes.csv", stringsAsFactors = FALSE)
-
-#Only select rows for the same patients listed in Profiles
-rows = which(outcomes$id %in% patients)
-
-#Select only a few columns
-outcomes = outcomes[rows,c("id", "gi_new", "daysSinceBirth")]
+data=events[,c("id", "medication", "start", "end")]
 
 
 
-# Step 2. Clean Data ------------------------------
+colnames(data) = c("patientID", "medication", "start", "end")
+
+# Step 2. Get patients and medications ------------------------------
 
 patients = as.vector(sort(unique(data$patientID)))
-data = cleanForConsistency(data)
-
-#write.csv(data, "../clinical/data-matrix-clean.csv")
 
 
+# Clean data =======
+#For single-day medication without end date
+indexes = intersect(which(is.na(data$end)), which(!is.na(data$start)))
+for(ind in indexes){
+  data[ind, "end"] = data[ind, "start"]+1
+}
+#For single-day medication without start date
+indexes = intersect(which(!is.na(data$end)), which(is.na(data$start)))
+for(ind in indexes){
+  data[ind, "start"] = data[ind, "end"]-1
+}
+
+#For negative start/end day
+indexes = which(as.numeric(as.character(data$start)) < 1)
+if(length(indexes) > 0 ){
+  data[indexes, "start"] = 1
+}
+indexes = which(as.numeric(as.character(data$end)) < 1)
+if(length(indexes) > 0 ){
+  data[indexes, "end"] = 1
+}
+
+#Remove NA/NA
+indexes = intersect(which(!is.na(data$start)), which(!is.na(data$end)))
+data = data[indexes,]
+
+
+# Merge Prednisone (burst and maintenance)
+data[which(data$medication == "Prednisone burst"), "medication"] = "Prednisone"
+data[which(data$medication == "Maintenance prednisone"), "medication"] = "Prednisone"
+
+
+write.csv(data, "../clinical/data-matrix-clean.csv")
 
 # Step 3. Create a distance matrix ----------------------
 
@@ -277,7 +301,7 @@ for(clust in 1:k){
 # Step 6. Plot the impairment scores ----------------------
 
 for(clust in 1:k){
-  
+ 
   patients = names(clusterCut[which(clusterCut==clust)])
   patients = order[which(order %in% patients)]
   clusterName = paste("Cluster",clust, sep="-")
@@ -285,7 +309,7 @@ for(clust in 1:k){
   
   #Get data for the cluster: Global Impairment Score
   gi_score = clinical[which(clinical$id %in% patients),c("id", "gi_new", "daysPostOnset", "daysSinceBirth", "daysSinceFirstAppointment")]
-  
+
   g <- plotGI(gi_score)
   patient.timeline = paste("../images/cluster-gi-score/", clusterName,".png", sep="")
   ggsave(patient.timeline, width = 8, height = 8, dpi=300)

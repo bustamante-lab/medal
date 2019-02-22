@@ -1,7 +1,7 @@
 ###############################################################
 #
 # Project: Medication Alignment Algorithm (Medal)
-# Author: Arturo Lopez Pineda <arturolp@stanford.edu>
+# Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)
 # Date: July 28, 2018
 #
 ###############################################################
