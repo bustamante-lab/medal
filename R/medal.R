@@ -1,19 +1,21 @@
-###############################################################
-#
-# Project: Medication Alignment Algorithm (Medal)
-# Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)
-# Date: Feb 21, 2019
-#
-###############################################################
+#################################################################
+##                                                             ##
+## Project: Medication Alignment Algorithm (Medal)             ##  
+## Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)  ##
+## Date: Feb 26, 2019                                          ##
+##                                                             ##
+#################################################################
 
 
 remove(list=ls())
 
 library(magrittr)
 library(ggplot2)
+library(ggpubr)
 library(dendextend)
 library(factoextra)
 library(NbClust)
+library(cluster)
 
 source("medal-functions.R")
 source("support-functions.R")
@@ -37,6 +39,7 @@ profiles = profiles[,c("id", "age_onset", "age_1st_appt", strats)]
 
 #Get unique patient IDs ordered
 patients = sort(unique(profiles$id))
+write.csv(patients, "patients.txt", row.names = FALSE, col.names = FALSE)
 
 #---
 #File with events
@@ -62,40 +65,58 @@ outcomes = outcomes[rows,c("id", "gi_new", "daysSinceBirth")]
 
 # Step 2. Clean Data ------------------------------
 
-patients = as.vector(sort(unique(data$patientID)))
-data = cleanForConsistency(data)
 
-#write.csv(data, "../clinical/data-matrix-clean.csv")
+# Group by class of medication
+medgroups = vector()
+medgroups$penicillin = c("penicillin v", "penicillin g", "amoxicillin", "augmentin")
+medgroups$cephalosporin = c("cephalexin", "cefadroxil")
+medgroups$macrolide = c("azithromycin")
+medgroups$nsaid = c("ibuprofen", "naproxen", "indomethacin", "sulindac", "aspirin")
+medgroups$hydrocortisone = c("prednisone", "maintenance prednisone", "decadron", "solumedrol")
+medgroups$antibody = c("rituximab", "ivig")
+medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
+
+
+data = cleanEvents(events, medgroups)
+
+write.csv(data, "../../clinical/data-matrix-clean.csv")
 
 
 
 # Step 3. Create a distance matrix ----------------------
 
-distMatrix = as.data.frame(matrix(rep(0, length(patients)*length(patients)), nrow = length(patients)), stringsAsFactors = FALSE)
 
-for(i in 2:length(patients)){
-  for(j in 1:(i-1)){
-    
-    p1=patients[i]
-    p2=patients[j]
-    
-    pat1=data[which(data$patientID==p1),]
-    pat2=data[which(data$patientID==p2),]
-    
-    distance =  medalDistance(pat1, pat2)
-    
-    print(paste("[",i,",",j,"] = ", distance, sep=""))
-    distMatrix[i,j] = distance
-    distMatrix[j,i] = distance
-  }
-}
+#-------
+#Calling MEDAL in R
+
+# distMatrix = as.data.frame(matrix(rep(0, length(patients)*length(patients)), nrow = length(patients)), stringsAsFactors = FALSE)
+#
+# for(i in 2:length(patients)){
+#   for(j in 1:(i-1)){
+#     
+#     p1=patients[i]
+#     p2=patients[j]
+#     
+#     pat1=data[which(data$patientID==p1),]
+#     pat2=data[which(data$patientID==p2),]
+#     
+#     distance =  medalDistance(pat1, pat2)
+#     
+#     print(paste("[",i,",",j,"] = ", distance, sep=""))
+#     distMatrix[i,j] = distance
+#     distMatrix[j,i] = distance
+#   }
+# }
 
 
+#-------
+#Calling pyMEDAL
 
-#write.csv(distMatrix, "../distance-matrix-medal.csv")
-#distMatrix = read.csv("../distance-matrix-medal.csv", row.names = 1)
-distMatrix = read.table("../pymedal/distance_mat.txt")
-patientIDs = read.table("../pymedal/patientID.txt", sep=",")
+system('python3 ../pymedal/pymedal.py ../../clinical/data-matrix-clean.csv', wait=TRUE)
+
+
+distMatrix = read.table("distance_mat.txt")
+patientIDs = read.table("patientID.txt", sep=",")
 
 pID = as.vector(unlist(patientIDs))
 colnames(distMatrix) = pID
@@ -103,28 +124,39 @@ rownames(distMatrix) = pID
 
 # Step 4.1 Choose number of clusters ----------------------
 
-d = scale(distMatrix, center=FALSE)
+#d = scale(distMatrix, center=FALSE)
+d = distMatrix
 
 # Elbow method
-fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
-  geom_vline(xintercept = 3, linetype = 2) +
-  geom_vline(xintercept = 5, linetype = 2) +
-  labs(subtitle = "Elbow method")
+elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
+  geom_vline(xintercept = 4, linetype = 2) +
+  labs(title = "Elbow method")
 # Silhouette method
-fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette")+
-  labs(subtitle = "Silhouette method")
+silhouette <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette", 
+                           print.summary = FALSE) +
+  geom_vline(xintercept = 4, linetype = 2) +
+  labs(title = "Silhouette method")
 # Gap statistic
 # nboot = 50 to keep the function speedy. 
 # recommended value: nboot= 500 for your analysis.
 # Use verbose = FALSE to hide computing progression.
 set.seed(123)
-fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, method = "gap_stat", nboot = 50, maxSE=list(method="globalSEmax", SE.factor=1)) +
-  labs(subtitle = "Gap statistic method")
+gapStat <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
+                        method = "gap_stat", nboot = 50, print.summary = FALSE,
+                        maxSE=list(method="Tibs2001SEmax", SE.factor=1)) +
+  geom_vline(xintercept = 4, linetype = 2) +
+  labs(title = "Gap statistic method")
+
+gpanels <- ggarrange(elbow, silhouette, gapStat,
+                     labels = c("A", "B", "C"),
+                     ncol = 1, nrow = 3, legend="bottom", common.legend = FALSE)
+ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 3000, width = 2000, res=300)
+
 
 
 # Step 4.1 Plot a dendrogram ----------------------
 
-k = 6
+k = 4 #visual inspection of previous figure
 
 mybranch.colors
 
@@ -133,20 +165,24 @@ n=8
 color.vector = rep(brewer.pal(n, "Dark2"), ceiling(k/n))
 color.vector = color.vector[1:k]
 
-
+# Create Dendrogram
 dend <- distMatrix %>% as.dist %>%
-  hclust(method="complete") %>% as.dendrogram %>%
+  hclust(method="ward.D") %>% as.dendrogram %>%
   set("branches_k_color", value = color.vector, k = k) %>% set("branches_lwd", 0.7) %>%
   set("labels_cex", 0.6) %>% set("labels_colors", value = color.vector, k = k) %>%
   set("leaves_pch", 19) %>% set("leaves_cex", 0.5)
 ggd1 <- as.ggdend(dend)
-ggplot(ggd1, horiz = FALSE)
+gClust <- ggplot(ggd1, horiz = FALSE)
 
+# Create PCA
+k2 <- kmeans(d, centers = k, nstart = 25)
+gPCA <- fviz_cluster(k2, data = d)
 
-#collapse_branch(tol = 11)  %>% hang.dendrogram(hang = 0)
-clusterCut = cutree(dend, k)
+gpanels <- ggarrange(gClust, gPCA,
+                     labels = c("A", "B"),
+                     ncol = 2, nrow = 1, legend="bottom", common.legend = FALSE)
+ggexport(gpanels, filename="../images/Figure2-dendro-pca.png", height = 2000, width = 3000, res=300)
 
-order = order.dendrogram(dend)
 
 
 

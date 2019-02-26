@@ -1,6 +1,6 @@
 ################################################################################
-## Medal algorithm Described in: Medication Usage Similarity in Oatients with ##
-## Acute-onset Neuropsychiatric Syndrome (Pineda, et. al.)                    ##
+## Medal algorithm Described in: Patient similarity in the longitudinal care  ## 
+## of patients with polypharmacy treatment (Pineda, et. al.)                  ##
 ##                                                                            ##
 ## Implemented by Armin Pourshafeie                                           ##
 ##                                                                            ##

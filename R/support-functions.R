@@ -2,19 +2,21 @@
 #
 # Project: Medication Alignment Algorithm (Medal)
 # Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)
-# Date: Feb 21, 2019
+# Date: Feb 26, 2019
 #
 ###############################################################
 
 
-cleanForConsistency <- function(data){
+cleanEvents <- function(data, groups){
   
   # Clean data =======
+  
   #For single-day medication without end date
   indexes = intersect(which(is.na(data$end)), which(!is.na(data$start)))
   for(ind in indexes){
     data[ind, "end"] = data[ind, "start"]+1
   }
+  
   #For single-day medication without start date
   indexes = intersect(which(!is.na(data$end)), which(is.na(data$start)))
   for(ind in indexes){
@@ -36,8 +38,22 @@ cleanForConsistency <- function(data){
   data = data[indexes,]
   
   
-  # Merge Prednisone (burst and maintenance)
-  data[which(data$medication == "Prednisone burst"), "medication"] = "Prednisone"
-  data[which(data$medication == "Maintenance prednisone"), "medication"] = "Prednisone"
+  # Group by class of medication
+  data$medication <- tolower(data$medication)
+
+  # for(medclass in names(groups)){
+  #   print(toupper(medclass))
+  #   for(med in groups[[medclass]]){
+  #     print(med)
+  #   }
+  #   print("-----")
+  # }
+
+  #Group together all medications of the same class
+  for(medclass in names(groups)){
+    indexes = which(data$medication %in% groups[[medclass]])
+    data[indexes, "medication"] = medclass
+  }
   
+  return(data)
 }
