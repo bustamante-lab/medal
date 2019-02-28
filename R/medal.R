@@ -2,7 +2,7 @@
 ##                                                             ##
 ## Project: Medication Alignment Algorithm (Medal)             ##  
 ## Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)  ##
-## Date: Feb 26, 2019                                          ##
+## Date: Feb 27, 2019                                          ##
 ##                                                             ##
 #################################################################
 
@@ -12,10 +12,13 @@ remove(list=ls())
 library(magrittr)
 library(ggplot2)
 library(ggpubr)
+library(ggrepel)
+
 library(dendextend)
 library(factoextra)
 library(NbClust)
 library(cluster)
+library(aricode)
 
 source("medal-functions.R")
 source("support-functions.R")
@@ -39,7 +42,6 @@ profiles = profiles[,c("id", "age_onset", "age_1st_appt", strats)]
 
 #Get unique patient IDs ordered
 patients = sort(unique(profiles$id))
-write.csv(patients, "patients.txt", row.names = FALSE, col.names = FALSE)
 
 #---
 #File with events
@@ -84,29 +86,6 @@ write.csv(data, "../../clinical/data-matrix-clean.csv")
 
 
 # Step 3. Create a distance matrix ----------------------
-
-
-#-------
-#Calling MEDAL in R
-
-# distMatrix = as.data.frame(matrix(rep(0, length(patients)*length(patients)), nrow = length(patients)), stringsAsFactors = FALSE)
-#
-# for(i in 2:length(patients)){
-#   for(j in 1:(i-1)){
-#     
-#     p1=patients[i]
-#     p2=patients[j]
-#     
-#     pat1=data[which(data$patientID==p1),]
-#     pat2=data[which(data$patientID==p2),]
-#     
-#     distance =  medalDistance(pat1, pat2)
-#     
-#     print(paste("[",i,",",j,"] = ", distance, sep=""))
-#     distMatrix[i,j] = distance
-#     distMatrix[j,i] = distance
-#   }
-# }
 
 
 #-------
@@ -156,173 +135,95 @@ ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 3000, 
 
 # Step 4.1 Plot a dendrogram ----------------------
 
-k = 4 #visual inspection of previous figure
+k = 4 # on visual inspection of previous figure
 
-mybranch.colors
+#removing outlier 37 (index 6)
+#k = 3
+#e = d
+#d = d[-6,]
+#d = d[,-6]
+#color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#0080ff")
+#color.vector2 = c("3"="#0080ff", "2"="#ca3542", "1"="#e8a631")
 
-library(RColorBrewer)
-n=8
-color.vector = rep(brewer.pal(n, "Dark2"), ceiling(k/n))
-color.vector = color.vector[1:k]
+#for PCAs and dendrogram
+color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
+color.vector2 = c("3"="#00a572", "4"="#0080ff", "2"="#ca3542", "1"="#e8a631")
 
+#-------
 # Create Dendrogram
-dend <- distMatrix %>% as.dist %>%
+dend <- d %>% as.dist %>%
   hclust(method="ward.D") %>% as.dendrogram %>%
-  set("branches_k_color", value = color.vector, k = k) %>% set("branches_lwd", 0.7) %>%
-  set("labels_cex", 0.6) %>% set("labels_colors", value = color.vector, k = k) %>%
+  set("branches_k_color", value = color.vector2, k = k) %>% set("branches_lwd", 0.7) %>%
+  set("labels_cex", 0.6) %>% set("labels_colors", value = "grey30", k = k) %>%
   set("leaves_pch", 19) %>% set("leaves_cex", 0.5)
 ggd1 <- as.ggdend(dend)
 gClust <- ggplot(ggd1, horiz = FALSE)
 
+#-------
 # Create PCA
+pca1 = prcomp(d, scale. = FALSE)
+hclust.assignment = cutree(dend, k)
+scores = as.data.frame(pca1$x)
+scores = cbind(scores, cluster=as.character(hclust.assignment))
+
+# plot of observations
+gPCA12 <- ggplot(data = scores, aes(x = PC1, y = PC2)) +
+  geom_text_repel(aes(label = rownames(scores)),
+                  color = "grey30",
+                  min.segment.length = unit(0.5, 'lines'),
+                  segment.color = 'grey90') +
+  geom_point(aes(colour = cluster), size=3) +
+  stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
+  #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
+  scale_color_manual(values=color.vector) +
+  scale_fill_manual(values=color.vector) +
+  ggtitle("PCA1 vs PCA2") +
+  theme_light(base_size = 14) +
+  theme(legend.position="bottom",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank())
+
+
+gPCA23 <- ggplot(data = scores, aes(x = PC2, y = PC3)) +
+  geom_text_repel(aes(label = rownames(scores)),
+                  color = "grey30",
+                  min.segment.length = unit(0.5, 'lines'),
+                  segment.color = 'grey90') +
+  geom_point(aes(colour = cluster), size=3) +
+  stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
+  #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
+  scale_color_manual(values=color.vector) +
+  scale_fill_manual(values=color.vector) +
+  ggtitle("PCA2 vs PCA3") +
+  theme_light(base_size = 14) +
+  theme(legend.position="bottom",
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank())
+
+#-------
+gpanels <- ggarrange(gClust, 
+                     ggarrange(gPCA12, gPCA23,
+                               ncol = 2, nrow=1, 
+                               labels = c("B", "C"),
+                               legend="bottom", common.legend = TRUE),
+                     labels = c("A"),
+                     ncol = 1, nrow = 2, legend="bottom", common.legend = FALSE)
+ggexport(gpanels, filename="../images/Figure2-dendro-pca.png", height = 3000, width = 4000, res=300)
+
+
+
+#K-means clustering
 k2 <- kmeans(d, centers = k, nstart = 25)
-gPCA <- fviz_cluster(k2, data = d)
 
-gpanels <- ggarrange(gClust, gPCA,
-                     labels = c("A", "B"),
-                     ncol = 2, nrow = 1, legend="bottom", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure2-dendro-pca.png", height = 2000, width = 3000, res=300)
+#Calculating Normalized Mutual Information
+NMI(k2$cluster, hclust.assignment, variant="sum")
+#https://course.ccs.neu.edu/cs6140sp15/7_locality_cluster/Assignment-6/NMI.pdf
 
 
-
-
-
-# Step 5. Plot summary patients ----------------------
-
-
-#TO DO:
-#Loop through the dendrogram inorder (using the tree structure)
-#for(i in 1:length(dend)){
-#  attr(dend[[i]], "members")
-#  print(length(dend[[i]]))
-#}
-
-#Loop through the clusters
-for(i in 1:k){
-  patient.order = names(clusterCut[which(clusterCut==i)])
-  patient.order = order[which(order %in% patient.order)]
-  clusterName = paste("Cluster",i,"patients", paste(patient.order,collapse="-"), sep="-")
-  print(clusterName)
-  
-  #For Patient 1
-  patient1.ID = patient.order[1]
-  patient1 = data[which(data$patientID==patient1.ID),]
-  cli1 = clinical[which(clinical[, "id"] == patient1.ID), ]
-  firstAppointment.p1 = cli1$daysSinceBirth[1] - cli1$daysSinceFirstAppointment[1]
-  firstOnset.p1 = cli1$daysSinceBirth[1] - cli1$daysPostOnset[1]
-  
-  for(j in 1:(length(patient.order)-1)){
-    
-    #For Patient 2
-    patient2.ID = patient.order[j+1]
-    patient2 = data[which(data$patientID==patient2.ID),]
-    cli2 = clinical[which(clinical[, "id"] == patient2.ID), ]
-    firstAppointment.p2 = cli2$daysSinceBirth[1] - cli2$daysSinceFirstAppointment[1]
-    firstOnset.p2 = cli2$daysSinceBirth[1] - cli2$daysPostOnset[1]
-    
-    #Update Values
-    firstAppointment = floor((firstAppointment.p1 + firstAppointment.p2) /2)
-    firstOnset = floor((firstOnset.p1 + firstOnset.p2) / 2)
-    
-    #calculate a composite timeline
-    #timeline = intersectPatients(patient1, patient2)
-    #timeline = unionPatients(patient1, patient2)
-    timeline = averagePatients(patient1, patient2)
-    
-    #update patient1
-    patient1 = timeline
-    firstAppointment.p1 = firstAppointment
-    firstOnset.p1 = firstOnset
-    if(dim(patient1)[1] ==0){
-      break()
-    }
-  }
-  
-  if(dim(patient1)[1] > 0){
-    #Get Label
-    if(nchar(patient1$patientID[1])>30){
-      patient.label = paste("Cluster ", i, sep="")
-      clusterName = paste("Cluster", i, sep="")
-    } else{
-      patient.label = paste("Patient ", timeline$patientID[1], sep="")
-    }
-    
-    #Plot
-    
-    g <- plotPatientTimeline(patient1, patient.label, firstAppointment, firstOnset)
-    #patient.timeline = paste("../images/cluster-union/",clusterName,".png", sep="")
-    #patient.timeline = paste("../images/cluster-intersect/",clusterName,".png", sep="")
-    patient.timeline = paste("../images/cluster-average/", clusterName,".png", sep="")
-    ggsave(patient.timeline, width = 8, height = 6, dpi=300)
-  }
-}
-
-
-# Step 6. Plot correlation triangles ----------------------
-
-#oral anti-inflammatorics
-A <- c("NSAID", "Prednisone")
-
-#IV therapies
-B <- c("IVIG", "Rituximab", "Solumedrol")
-
-#Antibiotics Amoxicillin
-C <- c("Augmentin", "Amoxicillin")
-
-#Antibiotics Ceph+Lide
-D <- c("Cefadroxil", "Clindamycin", "Azithromycin", "Cephalexin")
-
-medications = list(A=A,B=B,C=C,D=D)
-
-for(clust in 1:k){
-  patients = names(clusterCut[which(clusterCut==clust)])
-  patients = order[which(order %in% patients)]
-  clusterName = paste("Cluster",clust,"patients", paste(patients,collapse="-"), sep="-")
-  print(clusterName)
-  
-  #Get data for the entire cluster
-  cluster = data[which(data$patientID %in% patients),]
-  
-  #Create an empty matrix
-  interactions = as.data.frame(matrix("",4,4), stringsAsFactors = FALSE)
-  rownames(interactions) = names(medications)
-  colnames(interactions) = names(medications)
-  
-  #Fill in values
-  for(col in 1:length(medications)){
-    for(row in col:length(medications)){
-      medsRow = medications[[row]]
-      medsCol = medications[[col]]
-      pats = 0
-      for(p in patients){
-        indRow = which((data$patientID %in% p) & (data$medication %in% medsRow))
-        indCol = which((data$patientID %in% p) & (data$medication %in% medsCol))
-        if(length(indRow)>0 & length(indCol)>0){
-          #pats = pats + (length(indRow) + length(indCol))/2
-          pats = pats + 1
-        }
-      }
-      interactions[row,col]=round(pats/length(patients), digits=1)
-    }
-  }
-  
-  print(interactions)
-}
-
-
-# Step 6. Plot the impairment scores ----------------------
-
-for(clust in 1:k){
-  
-  patients = names(clusterCut[which(clusterCut==clust)])
-  patients = order[which(order %in% patients)]
-  clusterName = paste("Cluster",clust, sep="-")
-  print(clusterName)
-  
-  #Get data for the cluster: Global Impairment Score
-  gi_score = clinical[which(clinical$id %in% patients),c("id", "gi_new", "daysPostOnset", "daysSinceBirth", "daysSinceFirstAppointment")]
-  
-  g <- plotGI(gi_score)
-  patient.timeline = paste("../images/cluster-gi-score/", clusterName,".png", sep="")
-  ggsave(patient.timeline, width = 8, height = 8, dpi=300)
-}
+#Saving the cluster to profiles
+write.csv(cbind(profiles, cluster=hclust.assignment),
+          "../../clinical/data-matrix-profiles-cluster.csv")
