@@ -1,31 +1,22 @@
-###############################################################
-#
-# Project: Medication Alignment Algorithm (Medal)
-# Author: Arturo Lopez Pineda <arturolp@stanford.edu>
-# Date: Aug 10, 2018
-#
-###############################################################
+#################################################################
+##                                                             ##
+## Project: Medication Alignment Algorithm (Medal)             ##  
+## Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)  ##
+## Date: Feb 28, 2019                                          ##
+##                                                             ##
+#################################################################
+
 library(ggplot2)
-#library(gridExtra)
-#library(scales)
 library(stringr)
 
 
-mycolors <- c(
-  #oral therapies
-  "NSAID"="deepskyblue", "Prednisone"="deepskyblue3", 
-  #IV therapies
-  "IVIG"="violetred1", "Rituximab"="hotpink", "Solumedrol"="maroon3", 
-  #Antibiotics 1
-  "Augmentin"="gold1", "Amoxicillin"="orange",
-  #Antibiotics 2
-  "Cefadroxil"="limegreen", "Clindamycin"="yellowgreen",
-  #Antibiotics 3
-  "Azithromycin"="tomato", "Cephalexin"="firebrick2", 
-  #Other
-  "stop medication"="antiquewhite3"
-  #slateblue
-)
+mycolors <- c("penicillin"="#1b9e77",
+             "cephalosporin"="#d95f02",
+             "macrolide"="#7570b3",
+             "nsaid"="#e7298a",
+             "hydrocortisone"="#66a61e",
+             "antibody"="#e6ab02",
+             "dmard"="#a6761d")
 
 
 #TO DO:
@@ -39,18 +30,20 @@ plotPatientTimeline <- function(timeline, patient.label, firstAppointment, first
   maxDay = max(timeline$end)
   
   #Plot
-  g <- ggplot(timeline) + 
+  g <- ggplot(pat) + 
     geom_segment(aes(x=start, xend=end, y=medication, yend=medication, colour=medication), 
                  size=8, lineend="butt") +
-    scale_x_continuous(limits = c(floor(firstOnset/365)*365,ceiling(maxDay/365)*365), 
-                       breaks=seq(floor(firstOnset/365)*365,maxDay+365,365),
-                       labels=paste("year", seq(floor(firstOnset/365)*365,maxDay+365,365)/365),
-                       expand = c(0, 0.5)) +
-    scale_y_discrete(limits = rev(names(colors))) +
-    ggtitle(patient.label) +
-    scale_color_manual(values=mycolors) +
+    scale_color_manual(values = mycodes,
+                       limits = names(mycodes)) +
     geom_vline(xintercept = firstOnset, linetype="dotted", color="red") +
     geom_vline(xintercept = firstAppointment, linetype="dashed") +
+    scale_y_discrete(limits = rev(names(mycodes))) +
+    scale_x_continuous(limits = c(floor(firstOnset/365)*365,ceiling(6570/365)*365), 
+                       breaks = seq(floor(firstOnset/365)*365,6570+365,365),
+                       labels = paste("year", seq(floor(firstOnset/365)*365,6570+365,365)/365),
+                       expand = c(0, 0.5)) +
+    ggtitle(paste("Patient ", patient, sep="")) +
+    labs(subtitle="Medication history") +
     theme(#Add a title
       plot.title = element_text(hjust = 0.5, size=15),
       #Remove elements
@@ -58,14 +51,14 @@ plotPatientTimeline <- function(timeline, patient.label, firstAppointment, first
       #legend.position="none", 
       legend.title = element_blank(),
       axis.title.x=element_blank(),
-      axis.text.x=element_text(angle=90, vjust=0.5),
+      #axis.text.x=element_text(angle=90, vjust=0.5),
+      axis.text.x=element_blank(),
+      axis.ticks.x=element_blank(),
       axis.title.y=element_blank(),
       axis.ticks.y=element_blank(),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       panel.background = element_blank(),
-      # Force the plot into a rectangle aspect ratio
-      #aspect.ratio = 0.3,
       #Add a border
       panel.border = element_rect(colour = "black", fill=NA, size=1)
     )

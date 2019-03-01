@@ -9,6 +9,8 @@
 remove(list=ls())
 
 library(ggplot2)
+library(ggpubr)
+
 library(gridExtra)
 library(scales)
 
@@ -103,18 +105,45 @@ for(patient in patients){
   cli = outcomes[cliIDs, ]
   cli = cli[complete.cases(cli),]
   
+  
+  model <- lm(gi_new~daysSinceBirth, cli)
+  slope <- model$coefficients[2]
+  
+  mythreshold <- c("improving"="#67a9cf",
+    "stable"="gray80",
+    "worsening"="#ef8a62")
+  gi_group = as.character(cut(slope, 
+                              breaks=c(-1,-0.005,0.005,1), 
+                              labels=names(mythreshold)))
+  
+
+
+#Update values to adjust Clinical Values
+pat$start = pat$start + firstOnset
+pat$end = pat$end + firstOnset
+
+maxdays =max(pat$end, cli$daysSinceBirth)
+
+years = rev(paste("year", seq(1:ceiling(maxdays/365))))
+
+
+#------------------------
+# Plot
+#------------------------
+  
   gi_new <- ggplot(cli) + 
-    scale_color_manual(values=c("gray25"), name="score") +
-    #geom_smooth(aes(x=daysSinceBirth, y=gi_new, colour="gi_new"), method="loess", size=1, se=TRUE, fill="gray82", alpha=0.5) +
-    geom_smooth(aes(x=daysSinceBirth, y=gi_new), method="lm", size=5, se=FALSE, color="gray40", alpha=0.3) +
+    geom_smooth(aes(x=daysSinceBirth, y=gi_new, color=gi_group), method="lm", size=5, se=FALSE, alpha=0.1) +
     geom_line(aes(x=daysSinceBirth, y=gi_new), size=0.5, colour="gray", linetype="dotted") +
     geom_point(aes(x=daysSinceBirth, y=gi_new)) + 
     geom_vline(xintercept = firstOnset, linetype="dotted", color="red") +
     geom_vline(xintercept = firstAppointment, linetype="dashed") +
+    scale_color_manual(values=mythreshold,
+                       limits = names(mythreshold),
+                       name="Global Impairment Score") +
     scale_y_continuous(limits = c(0, 100)) +
-    scale_x_continuous(limits = c(floor(firstOnset/365)*365,ceiling(6570/365)*365), 
-                       breaks = seq(floor(firstOnset/365)*365,6570+365,365),
-                       labels = paste("year", seq(floor(firstOnset/365)*365,6570+365,365)/365),
+    scale_x_continuous(limits = c(floor(firstOnset/365)*365,ceiling(maxdays/365)*365), 
+                       breaks = seq(floor(firstOnset/365)*365,maxdays+365,365),
+                       labels = paste("year", seq(floor(firstOnset/365)*365,maxdays+365,365)/365),
                        expand = c(0, 0.5)) +
     labs(subtitle="Global Impairment Score") +
     theme(#Add a title
@@ -122,7 +151,7 @@ for(patient in patients){
       #Remove elements
       legend.position="right", 
       #legend.position="none", 
-      legend.title = element_blank(),
+      #legend.title = element_blank(),
       axis.title.x=element_blank(),
       #axis.text.x=element_blank(),
       #axis.ticks.x=element_blank(),
@@ -141,10 +170,6 @@ for(patient in patients){
   #------------------------
   # plot the patient timeline
   #------------------------
-  #max = max(unique(pat2$year))
-  max = 23
-  years = rev(paste("year", seq(1:max)))
-  grouping = names(medgroups)
   
   mycodes <- c("penicillin"="#1b9e77",
                "cephalosporin"="#d95f02",
@@ -154,11 +179,7 @@ for(patient in patients){
                "antibody"="#e6ab02",
                "dmard"="#a6761d")
   
-  #Update values to adjust Clinical Values
-  pat$start = pat$start + firstOnset
-  pat$end = pat$end + firstOnset
-  
-  
+
   #Plot
   gPat <- ggplot(pat) + 
     geom_segment(aes(x=start, xend=end, y=medication, yend=medication, colour=medication), 
@@ -168,9 +189,9 @@ for(patient in patients){
     geom_vline(xintercept = firstOnset, linetype="dotted", color="red") +
     geom_vline(xintercept = firstAppointment, linetype="dashed") +
     scale_y_discrete(limits = rev(names(mycodes))) +
-    scale_x_continuous(limits = c(floor(firstOnset/365)*365,ceiling(6570/365)*365), 
-                       breaks = seq(floor(firstOnset/365)*365,6570+365,365),
-                       labels = paste("year", seq(floor(firstOnset/365)*365,6570+365,365)/365),
+    scale_x_continuous(limits = c(floor(firstOnset/365)*365,ceiling(maxdays/365)*365), 
+                       breaks = seq(floor(firstOnset/365)*365,maxdays+365,365),
+                       labels = paste("year", seq(floor(firstOnset/365)*365,maxdays+365,365)/365),
                        expand = c(0, 0.5)) +
     ggtitle(paste("Patient ", patient, sep="")) +
     labs(subtitle="Medication history") +
@@ -197,7 +218,7 @@ for(patient in patients){
   gpanels <- ggarrange(gPat, gi_new, 
                        labels = c("A", "B"),
                        align = "v",
-                       ncol = 1, nrow = 2, legend="right", common.legend = TRUE)
+                       ncol = 1, nrow = 2, legend="right", common.legend = FALSE)
   
   var = paste("gPatient", patient, sep = "")
   
