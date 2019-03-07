@@ -65,7 +65,7 @@ outcomes = outcomes[rows,c("id", "gi_new", "daysSinceBirth")]
 
 
 # Group by class of medication
-medgroups = vector()
+medgroups = list()
 medgroups$penicillin = c("penicillin v", "penicillin g", "amoxicillin", "augmentin")
 medgroups$cephalosporin = c("cephalexin", "cefadroxil")
 medgroups$macrolide = c("azithromycin")
@@ -110,31 +110,39 @@ for(patient in patients){
   slope <- model$coefficients[2]
   
   mythreshold <- c("improving"="#67a9cf",
-    "stable"="gray80",
-    "worsening"="#ef8a62")
+                   "stable"="gray80",
+                   "worsening"="#ef8a62")
   gi_group = as.character(cut(slope, 
                               breaks=c(-1,-0.005,0.005,1), 
                               labels=names(mythreshold)))
   
-
-
-#Update values to adjust Clinical Values
-pat$start = pat$start + firstOnset
-pat$end = pat$end + firstOnset
-
-maxdays =max(pat$end, cli$daysSinceBirth)
-
-years = rev(paste("year", seq(1:ceiling(maxdays/365))))
-
-
-#------------------------
-# Plot
-#------------------------
   
-  gi_new <- ggplot(cli) + 
-    geom_smooth(aes(x=daysSinceBirth, y=gi_new, color=gi_group), method="lm", size=5, se=FALSE, alpha=0.1) +
-    geom_line(aes(x=daysSinceBirth, y=gi_new), size=0.5, colour="gray", linetype="dotted") +
-    geom_point(aes(x=daysSinceBirth, y=gi_new)) + 
+  
+  #Update values to adjust Clinical Values
+  pat$start = pat$start + firstOnset
+  pat$end = pat$end + firstOnset
+  
+  maxdays =max(pat$end, cli$daysSinceBirth)
+  
+  years = rev(paste("year", seq(1:ceiling(maxdays/365))))
+  
+  
+  #------------------------
+  # Plot
+  #------------------------
+  # predict <- predict(loess(gi_new~daysSinceBirth, data = cli))
+  # cli$change <- cli$gi_new - predict
+  # 
+  #   ggplot(cli, aes(x=daysSinceBirth, y=gi_new, colour=change)) + 
+  #   geom_line(aes(colour=gi_new), size=0.5) +
+  #   geom_smooth(aes(colour=..y..), method="loess", size=1.5, se=FALSE) 
+
+  
+  gi_new <- ggplot(cli, aes(x=daysSinceBirth, y=gi_new)) +
+    geom_smooth(aes(color=gi_group), method="lm", size=5, se=FALSE) +
+    geom_smooth(color="gray70", method="loess", size=2, se=TRUE, alpha=0.1) +
+    geom_line(size=0.5, colour="gray", linetype="dotted") +
+    geom_point() + 
     geom_vline(xintercept = firstOnset, linetype="dotted", color="red") +
     geom_vline(xintercept = firstAppointment, linetype="dashed") +
     scale_color_manual(values=mythreshold,
@@ -179,7 +187,7 @@ years = rev(paste("year", seq(1:ceiling(maxdays/365))))
                "antibody"="#e6ab02",
                "dmard"="#a6761d")
   
-
+  
   #Plot
   gPat <- ggplot(pat) + 
     geom_segment(aes(x=start, xend=end, y=medication, yend=medication, colour=medication), 
