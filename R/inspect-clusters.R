@@ -9,6 +9,7 @@
 remove(list=ls())
 
 library(ggplot2)
+library(reshape2)
 
 source("support-functions.R")
 
@@ -75,71 +76,94 @@ events = cleanEvents(events, medgroups)
 # Step 3. Plot cluster summaries 
 #--------------------------------------------------
 
-#TO DO:
-#Loop through the dendrogram inorder (using the tree structure)
-#for(i in 1:length(dend)){
-#  attr(dend[[i]], "members")
-#  print(length(dend[[i]]))
-#}
+clusters = unique(sort(profiles$cluster))
+years = 7
+daysPerMonth = 30
+n = years*12 #7 years
+m = length(names(medgroups))
 
 #Loop through the clusters
-for(i in 1:k){
-  patient.order = names(clusterCut[which(clusterCut==i)])
-  patient.order = order[which(order %in% patient.order)]
-  clusterName = paste("Cluster",i,"patients", paste(patient.order,collapse="-"), sep="-")
-  print(clusterName)
+for(cluster in clusters){
   
-  #For Patient 1
-  patient1.ID = patient.order[1]
-  patient1 = data[which(data$patientID==patient1.ID),]
-  cli1 = clinical[which(clinical[, "id"] == patient1.ID), ]
-  firstAppointment.p1 = cli1$daysSinceBirth[1] - cli1$daysSinceFirstAppointment[1]
-  firstOnset.p1 = cli1$daysSinceBirth[1] - cli1$daysPostOnset[1]
+  #Get the events for patients in a cluster
+  patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
+  eveIDs = which(events[,"id"] %in% patIDs)
+  pat = events[eveIDs, ]
   
-  for(j in 1:(length(patient.order)-1)){
-    
-    #For Patient 2
-    patient2.ID = patient.order[j+1]
-    patient2 = data[which(data$patientID==patient2.ID),]
-    cli2 = clinical[which(clinical[, "id"] == patient2.ID), ]
-    firstAppointment.p2 = cli2$daysSinceBirth[1] - cli2$daysSinceFirstAppointment[1]
-    firstOnset.p2 = cli2$daysSinceBirth[1] - cli2$daysPostOnset[1]
-    
-    #Update Values
-    firstAppointment = floor((firstAppointment.p1 + firstAppointment.p2) /2)
-    firstOnset = floor((firstOnset.p1 + firstOnset.p2) / 2)
-    
-    #calculate a composite timeline
-    #timeline = intersectPatients(patient1, patient2)
-    #timeline = unionPatients(patient1, patient2)
-    timeline = averagePatients(patient1, patient2)
-    
-    #update patient1
-    patient1 = timeline
-    firstAppointment.p1 = firstAppointment
-    firstOnset.p1 = firstOnset
-    if(dim(patient1)[1] ==0){
-      break()
+  #Convert all days into months
+  pat$start = round(pat$start/daysPerMonth)
+  pat$end = round(pat$end/daysPerMonth)
+  
+  #Initialized matrix by medication
+  drug <- matrix(rep(0, n*m), ncol=n, nrow=m)
+  rownames(drug) = names(medgroups)
+  colnames(drug) = seq(1:n)
+  
+  #Add one event if drug used in that month
+  for(med in names(medgroups)){
+    medIDs = which(pat[,"medication"]==med)
+    clusterEvents = pat[medIDs,]
+    for(i in 1:dim(clusterEvents)[1]){
+      x = clusterEvents[i,"medication"]
+      start = clusterEvents[i,"start"]
+      end = clusterEvents[i,"end"]
+      
+      drug[x, start:end] = drug[x, start:end] + 1
     }
   }
   
-  if(dim(patient1)[1] > 0){
-    #Get Label
-    if(nchar(patient1$patientID[1])>30){
-      patient.label = paste("Cluster ", i, sep="")
-      clusterName = paste("Cluster", i, sep="")
-    } else{
-      patient.label = paste("Patient ", timeline$patientID[1], sep="")
-    }
-    
-    #Plot
-    
-    g <- plotPatientTimeline(patient1, patient.label, firstAppointment, firstOnset)
-    #patient.timeline = paste("../images/cluster-union/",clusterName,".png", sep="")
-    #patient.timeline = paste("../images/cluster-intersect/",clusterName,".png", sep="")
-    patient.timeline = paste("../images/cluster-average/", clusterName,".png", sep="")
-    ggsave(patient.timeline, width = 8, height = 6, dpi=300)
-  }
+  #Normalize by the number of patients in the cluster
+  drug = drug/length(patIDs)
+  
+  
+  #Reshape the matrix (Melt)
+  melted_drug <- melt(drug)
+  colnames(melted_drug) = c("med", "month", "value")
+  
+  #melted_drug$year = floor(melted_drug$month/12)
+  
+  
+  #Plot heatmap
+  ggplot(melted_drug, aes(x=month, y=med, fill=value)) + 
+    #redrawing tiles to remove cross lines from legend
+    geom_tile(colour="white",size=0.25, show.legend = FALSE)+
+    #remove extra space
+    scale_y_discrete(expand=c(0,0), breaks=names(medgroups)) +
+    scale_x_continuous(expand=c(0,0),
+                     breaks=c(seq(1:years)*12),
+                     labels=c(paste("year", seq(1:years))))+
+    #custom colours for cut levels and na values
+    scale_fill_gradient2(low = "white", mid = "#c994c7" , high = "#dd1c77",
+                         midpoint = 0.7,
+                         limit = c(0,1), space = "Lab", 
+                         name="Medication Usage") +
+    #equal aspect ratio x and y axis
+    #coord_fixed() +
+    #remove axis labels, add title
+    labs(title="Medication usage")+
+    #set base size for all font elements
+    theme(#Add a title
+      plot.title = element_text(hjust = 0.5, size=15),
+      #Remove elements
+      legend.position="right", 
+      #legend.position="none", 
+      #legend.title = element_blank(),
+      axis.title.x=element_blank(),
+      #axis.text.x=element_blank(),
+      #axis.ticks.x=element_blank(),
+      axis.text.x=element_text(angle=90, vjust=0.5),
+      axis.title.y=element_blank(),
+      axis.ticks.y=element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      #Add a border
+      panel.border = element_rect(colour = "black", fill=NA, size=1)
+    )
+  
+  
+  
+  
 }
 
 
