@@ -69,7 +69,7 @@ outcomes = outcomes[rows,c("id", "gi_new", "daysSinceBirth")]
 
 
 # Group by class of medication
-medgroups = vector()
+medgroups = list()
 medgroups$penicillin = c("penicillin v", "penicillin g", "amoxicillin", "augmentin")
 medgroups$cephalosporin = c("cephalexin", "cefadroxil")
 medgroups$macrolide = c("azithromycin")
@@ -160,7 +160,7 @@ ggd1 <- as.ggdend(dend)
 gClust <- ggplot(ggd1, horiz = FALSE)
 
 #-------
-# Create PCA
+# Create MDS
 pca1 = prcomp(d, scale. = FALSE)
 hclust.assignment = cutree(dend, k)
 scores = as.data.frame(pca1$x)
@@ -177,7 +177,8 @@ gPCA12 <- ggplot(data = scores, aes(x = PC1, y = PC2)) +
   #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
   scale_color_manual(values=color.vector) +
   scale_fill_manual(values=color.vector) +
-  ggtitle("PCA1 vs PCA2") +
+  labs(x="MDS1", y="MDS2") +
+  ggtitle("MDS1 vs MDS2") +
   theme_light(base_size = 14) +
   theme(legend.position="bottom",
         panel.grid.major = element_blank(),
@@ -196,7 +197,8 @@ gPCA23 <- ggplot(data = scores, aes(x = PC2, y = PC3)) +
   #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
   scale_color_manual(values=color.vector) +
   scale_fill_manual(values=color.vector) +
-  ggtitle("PCA2 vs PCA3") +
+  labs(x="MDS2", y="MDS3") +
+  ggtitle("MDS2 vs MDS3") +
   theme_light(base_size = 14) +
   theme(legend.position="bottom",
         panel.grid.major = element_blank(),
@@ -212,7 +214,7 @@ gpanels <- ggarrange(gClust,
                                legend="bottom", common.legend = TRUE),
                      labels = c("A"),
                      ncol = 1, nrow = 2, legend="bottom", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure2-dendro-pca.png", height = 3000, width = 4000, res=300)
+ggexport(gpanels, filename="../images/Figure2-dendro-mds.png", height = 3000, width = 4000, res=300)
 
 
 

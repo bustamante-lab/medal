@@ -8,15 +8,204 @@
 
 library(ggplot2)
 library(stringr)
+library(reshape2)
 
 
 mycolors <- c("penicillin"="#1b9e77",
-             "cephalosporin"="#d95f02",
-             "macrolide"="#7570b3",
-             "nsaid"="#e7298a",
-             "hydrocortisone"="#66a61e",
-             "antibody"="#e6ab02",
-             "dmard"="#a6761d")
+              "cephalosporin"="#d95f02",
+              "macrolide"="#7570b3",
+              "nsaid"="#e7298a",
+              "hydrocortisone"="#66a61e",
+              "antibody"="#e6ab02",
+              "dmard"="#a6761d")
+
+
+
+
+
+plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, medgroups){
+  #Get the events for patients in a cluster
+  patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
+  eveIDs = which(events[,"id"] %in% patIDs)
+  pat = events[eveIDs, ]
+  
+  #Convert all days into months
+  pat$start = round(pat$start/daysPerMonth)
+  pat$end = round(pat$end/daysPerMonth)
+  
+  #Initialized matrix by medication
+  drug <- matrix(rep(0, n*m), ncol=n, nrow=m)
+  rownames(drug) = names(medgroups)
+  colnames(drug) = seq(1:n)
+  
+  #Add one event if drug used in that month
+  for(med in names(medgroups)){
+    medIDs = which(pat[,"medication"]==med)
+    clusterEvents = pat[medIDs,]
+    for(i in 1:dim(clusterEvents)[1]){
+      x = clusterEvents[i,"medication"]
+      start = clusterEvents[i,"start"]
+      end = clusterEvents[i,"end"]
+      
+      drug[x, start:end] = drug[x, start:end] + 1
+    }
+  }
+  
+  #Normalize by the number of patients in the cluster
+  drug = drug/length(patIDs)
+  
+  
+  #Reshape the matrix (Melt)
+  melted_drug <- melt(drug)
+  colnames(melted_drug) = c("med", "month", "value")
+  melted_drug[which(melted_drug$value>1), "value"]=1 #avoiding duplicates
+  
+  #Remove all 0 values
+  melted_drug = melted_drug[-which(melted_drug$value == 0),]
+  
+  # d <- data.frame(x=rep(1:20, 5), y=rnorm(100, 5, .2) + rep(1:5, each=20), z=rep(1:20, 5), grp=factor(rep(1:5, each=20)))
+  # 
+  # ggplot(d) +
+  #   geom_path(aes(x, y, group=grp, alpha=z, color=grp), size=2)
+  
+  
+  #Plot heatmap
+  gPaths <- ggplot(melted_drug, aes(x=month, y=value)) +
+    geom_path(aes(color = med), size=5, alpha=0.8) +
+    geom_smooth(method="loess", color="gray30", se=FALSE, size=1.2, linetype = "dashed") +
+    #Group by medication
+    facet_wrap(.~med, ncol=1, scales="free_y") +
+    #Reshape the scales
+    scale_y_continuous(limits=c(0,1),
+                       breaks = c(0,0.5,1),
+                       labels = rev(c("all patients", "some", "none"))) +
+    scale_x_continuous(breaks=c(seq(0, years, 1)*12),
+                       labels=c(paste("year", seq(0,years, 1))))+
+    #custom colours
+    scale_color_manual(values=medcolors) +
+    #Add labels
+    labs(title=paste("Medication usage in cluster", cluster), x="Years of follow-up") +
+    #set base size for all font elements
+    theme_bw()+
+    theme(#Add a title
+      plot.title = element_text(hjust = 0.5, size=15),
+      #Remove elements
+      legend.position="none", 
+      #legend.position="none", 
+      #legend.title = element_blank(),
+      #axis.title.x=element_blank(),
+      #axis.text.x=element_blank(),
+      #axis.ticks.x=element_blank(),
+      axis.text.x=element_text(angle=90, vjust=0.5),
+      axis.title.y=element_blank(),
+      axis.ticks.y=element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      #Facets
+      strip.background = element_blank(),
+      strip.text = element_text(size = 12, hjust=0)
+    )
+  
+  return(gPaths)
+}
+
+
+plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
+  #Get the events for patients in a cluster
+  patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
+  eveIDs = which(events[,"id"] %in% patIDs)
+  pat = events[eveIDs, ]
+  patients = unique(pat$id)
+  
+  #Convert all days into months
+  pat$start = round(pat$start/daysPerMonth)
+  pat$end = round(pat$end/daysPerMonth)
+  
+  #Create an empty matrix
+  interactions = vector()
+  
+  #Fill in values
+  for(col in 1:length(medications)){
+    for(row in col:length(medications)){
+      
+      medsRow = medications[[row]]
+      medsCol = medications[[col]]
+      value = 0
+      
+      for(p in patients){
+        indRow = which((events$id %in% p) & (events$medication %in% medsRow))
+        indCol = which((events$id %in% p) & (events$medication %in% medsCol))
+        if(length(indRow)>0 & length(indCol)>0){
+          value = value + 1
+        }
+      }
+      value = round(value/length(patients), digits=1)
+      interactions = rbind(interactions, 
+                           c(medications[col], medications[row], value))
+    }
+  }
+  
+  colnames(interactions) = c("A", "B", "value")
+  interactions = as.data.frame(interactions, stringsAsFactors = TRUE)
+  interactions$value <- as.numeric(as.character(interactions$value))
+
+  
+  
+  # interactions = as.data.frame(matrix("",length(medications),length(medications)), 
+  #                              stringsAsFactors = FALSE)
+  # rownames(interactions) = medications
+  # colnames(interactions) = medications
+  # 
+  # #Fill in values
+  # for(col in 1:length(medications)){
+  #   for(row in col:length(medications)){
+  #     medsRow = medications[[row]]
+  #     medsCol = medications[[col]]
+  #     pats = 0
+  #     for(p in patients){
+  #       indRow = which((events$id %in% p) & (events$medication %in% medsRow))
+  #       indCol = which((events$id %in% p) & (events$medication %in% medsCol))
+  #       if(length(indRow)>0 & length(indCol)>0){
+  #         #pats = pats + (length(indRow) + length(indCol))/2
+  #         pats = pats + 1
+  #       }
+  #     }
+  #     interactions[row,col]=round(pats/length(patients), digits=1)
+  #   }
+  # }
+  
+  #print(interactions)
+  
+  
+  
+  #Plot heatmap
+  gTri <- ggplot(interactions, aes(x=A, y=B)) +
+    geom_tile(aes(alpha=value), fill="steelblue", color="gray33") +
+    geom_text(aes(label=value)) +
+    scale_y_discrete(limits=rev(medications)) +
+    scale_x_discrete(limits=medications) +
+    ggtitle(paste("Co-occurrence in cluster", cluster)) +
+    theme(#Add a title
+      plot.title = element_text(hjust = 0, size=15),
+      #Remove elements
+      legend.position="none", 
+      #legend.position="none", 
+      #legend.title = element_blank(),
+      axis.text=element_text(size=10),
+      axis.title.x=element_blank(),
+      axis.ticks.x=element_blank(),
+      axis.text.x=element_text(angle=90, hjust=1),
+      axis.title.y=element_blank(),
+      axis.ticks.y=element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      panel.border = element_rect(colour = "black", fill=NA, size=1)
+    )
+  
+  return(gTri)
+}
 
 
 #TO DO:
