@@ -118,7 +118,7 @@ ggexport(gpanels, filename="../images/Figure3-clusters.png", height = 4000, widt
 # Step 4. Plot co-occurence triangles 
 #--------------------------------------------------
 
-#Get all paths
+#Get all triangles
 gTri1 <- plotCoOcurrenceTriangle(1, events, profiles, names(medgroups))
 gTri2 <- plotCoOcurrenceTriangle(2, events, profiles, names(medgroups))
 gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups))
@@ -130,19 +130,21 @@ gpanels <- ggarrange(gTri1, gTri2, gTri3,
 ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, width = 5000, res=300)
 
 
-# Step 6. Plot the impairment scores ----------------------
 
-for(clust in 1:k){
+#--------------------------------------------------
+# Step 5. Plot the impairment scores
+#--------------------------------------------------
+
+
+  #Get all impairment scores
+  gGIS1 <- plotScores(1, outcomes, profiles)
+  gGIS2 <- plotScores(2, outcomes, profiles)
+  gGIS3 <- plotScores(3, outcomes, profiles)
   
-  patients = names(clusterCut[which(clusterCut==clust)])
-  patients = order[which(order %in% patients)]
-  clusterName = paste("Cluster",clust, sep="-")
-  print(clusterName)
   
-  #Get data for the cluster: Global Impairment Score
-  gi_score = clinical[which(clinical$id %in% patients),c("id", "gi_new", "daysPostOnset", "daysSinceBirth", "daysSinceFirstAppointment")]
+  #Save plot
+  gpanels <- ggarrange(gGIS1, gGIS2, gGIS3, 
+                       labels = c("", "", ""),
+                       ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
+  ggexport(gpanels, filename="../images/Figure3-scores.png", height = 2000, width = 5000, res=300)
   
-  g <- plotGI(gi_score)
-  patient.timeline = paste("../images/cluster-gi-score/", clusterName,".png", sep="")
-  ggsave(patient.timeline, width = 8, height = 8, dpi=300)
-}

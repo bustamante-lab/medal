@@ -208,6 +208,53 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
 }
 
 
+plotScores <- function(cluster, outcomes, profiles, maxDay){
+  
+  #Get the scores for patients in a cluster
+  patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
+  outIDs = which(outcomes[,"id"] %in% patIDs)
+  pat = outcomes[outIDs, ]
+  patients = patIDs
+  
+  pat$id <- as.character(pat$id)
+  
+  #Plot heatmap
+  gScore <- 
+    ggplot(data = pat, aes(x = daysSinceBirth,  y = gi_new)) +
+    #geom_point(aes(group=id, color=id), size=1)+
+    geom_line(aes(group=id, color=id), size=0.5, linetype="dashed")+
+    geom_smooth(aes(group=id, color=id), method = "loess", size=1, se=FALSE) +
+    geom_smooth(method = "loess", size=2, se=FALSE, color="gray50") +
+    scale_y_continuous(limits = c(0, 100), expand=c(0,0)) +
+    scale_x_continuous(limits = c(0, maxDay) , 
+                       breaks=seq(0,(maxDay+365),365),
+                       labels=paste("year", seq(0,(maxDay+365),365)/365),
+                       expand = c(0, 0)) +
+    theme(#Add a title
+      plot.title = element_text(hjust = 0.5, size=15),
+      #Remove elements
+      #legend.position="right", 
+      legend.position="none", 
+      legend.title = element_blank(),
+      axis.title.x=element_blank(),
+      axis.text.x=element_blank(),
+      axis.ticks.x=element_blank(),
+      #axis.text.x=element_text(angle=90, vjust=0.5),
+      #axis.title.y=element_blank(),
+      #axis.ticks.y=element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      panel.background = element_blank(),
+      # Force the plot into a rectangle aspect ratio
+      #aspect.ratio = 0.3,
+      #Add a border
+      panel.border = element_rect(colour = "black", fill=NA, size=1)
+    )
+  
+  return(gScore)
+}
+
+
 #TO DO:
 plotPatientTimeline <- function(timeline, patient.label, firstAppointment, firstOnset, colors=mycolors){
   
