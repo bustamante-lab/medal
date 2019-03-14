@@ -9,7 +9,7 @@ For citation and more information refer to:
 
 
 ## Dependencies
-This code was built using Python 3.4.3
+This code was built using Python 3.4.3 with modules numpy, numba, pandas, tqdm
 
 
 ## Current development status

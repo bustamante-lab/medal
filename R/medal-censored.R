@@ -2,7 +2,7 @@
 ##                                                             ##
 ## Project: Medication Alignment Algorithm (Medal)             ##  
 ## Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)  ##
-## Date: Feb 27, 2019                                          ##
+## Date: Mar 14, 2019                                          ##
 ##                                                             ##
 #################################################################
 
@@ -80,8 +80,13 @@ medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
 
 
 data = cleanEvents(events, medgroups)
+data1 = rightCensoring(data, 1)
+data2 = rightCensoring(data, 2)
+data3 = rightCensoring(data, 3)
 
-write.csv(data, "../../clinical/data-matrix-clean.csv")
+write.csv(data, "../../clinical/data-matrix-clean-1year.csv")
+write.csv(data, "../../clinical/data-matrix-clean-2year.csv")
+write.csv(data, "../../clinical/data-matrix-clean-3year.csv")
 
 
 
@@ -91,7 +96,7 @@ write.csv(data, "../../clinical/data-matrix-clean.csv")
 #-------
 #Calling pyMEDAL
 
-system('python3 ../pymedal/pymedal.py ../../clinical/data-matrix-clean.csv', wait=TRUE)
+system('python3 ../pymedal/pymedal.py ../../clinical/data-matrix-clean-1year.csv', wait=TRUE)
 
 
 distMatrix = read.table("distance_mat.txt")
@@ -105,21 +110,16 @@ rownames(distMatrix) = pID
 
 #d = scale(distMatrix, center=FALSE)
 d = distMatrix
-
-# Remove outlier (patient 37)
-e=d
-remInd = which(names(d)=="37")
-d = d[-remInd,]
-d = d[,-remInd]
+k=4
 
 # Elbow method
 elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
-  geom_vline(xintercept = 4, linetype = 2) +
+  geom_vline(xintercept = k, linetype = 2) +
   labs(title = "Elbow method")
 # Silhouette method
 silhouette <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette", 
                            print.summary = FALSE) +
-  geom_vline(xintercept = 4, linetype = 2) +
+  geom_vline(xintercept = k, linetype = 2) +
   labs(title = "Silhouette method")
 # Gap statistic
 # nboot = 50 to keep the function speedy. 
@@ -129,14 +129,14 @@ set.seed(123)
 gapStat <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
                         method = "gap_stat", nboot = 50, print.summary = FALSE,
                         maxSE=list(method="Tibs2001SEmax", SE.factor=1)) +
-  geom_vline(xintercept = 4, linetype = 2) +
+  geom_vline(xintercept = k, linetype = 2) +
   labs(title = "Gap statistic method")
 
 gpanels <- ggarrange(elbow, silhouette, gapStat,
                      labels = c("A", "B", "C"),
                      ncol = 1, nrow = 3, legend="bottom", 
                      align="v", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 3000, width = 2000, res=300)
+ggexport(gpanels, filename="../images/Figure1-num-clusters-year1.png", height = 3000, width = 2000, res=300)
 
 
 
@@ -154,8 +154,8 @@ color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#0080ff")
 color.vector2 = c("3"="#0080ff", "2"="#ca3542", "1"="#e8a631")
 
 #for PCAs and dendrogram
-#color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
-#color.vector2 = c("3"="#00a572", "4"="#0080ff", "2"="#ca3542", "1"="#e8a631")
+color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
+color.vector2 = c("3"="#00a572", "4"="#0080ff", "2"="#ca3542", "1"="#e8a631")
 
 #-------
 # Create Dendrogram
@@ -222,7 +222,7 @@ gpanels <- ggarrange(gClust,
                                legend="bottom", common.legend = TRUE),
                      labels = c("A"),
                      ncol = 1, nrow = 2, legend="bottom", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure2-dendro-mds-rem37.png", height = 3000, width = 4000, res=300)
+ggexport(gpanels, filename="../images/Figure2-dendro-mds-rem37-year1.png", height = 3000, width = 4000, res=300)
 
 
 

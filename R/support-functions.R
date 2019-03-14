@@ -7,6 +7,23 @@
 ###############################################################
 
 
+rightCensoring <- function(data, year){
+
+  days = year*365
+  dataC = data
+  
+  #Remove all rows with start date beyond right censorship (days)
+  indexes = which(dataC$start>days)
+  dataC = dataC[-indexes, ]
+  
+  #Remove all rows with start date beyond right censorship (days)
+  indexes = which(dataC$end>days)
+  dataC[indexes, "end"] = days
+  
+  return(dataC)
+}
+
+
 cleanEvents <- function(data, groups){
   
   # Clean data =======
