@@ -20,7 +20,42 @@ mycolors <- c("penicillin"="#1b9e77",
               "dmard"="#a6761d")
 
 
-
+plotMDS <- function(d, k, color.vector, title="MDS"){
+  
+  # Create Dendrogram
+  dend <- d %>% as.dist %>%
+    hclust(method="ward.D") %>% as.dendrogram #%>%
+    #set("branches_k_color", value = color.vector2, k = k) %>% set("branches_lwd", 0.7) %>%
+    #set("labels_cex", 0.6) %>% set("labels_colors", value = "grey30", k = k) %>%
+    #set("leaves_pch", 19) %>% set("leaves_cex", 0.5)
+  #ggd1 <- as.ggdend(dend)
+  #gClust <- ggplot(ggd1, horiz = FALSE)
+  
+  pca1 = prcomp(d, scale. = FALSE)
+  hclust.assignment = cutree(dend, k)
+  scores = as.data.frame(pca1$x)
+  scores = cbind(scores, cluster=as.character(hclust.assignment))
+  
+  # plot of observations
+  gMDS1 <- ggplot(data = scores, aes(x = PC1, y = PC2)) +
+    geom_text_repel(aes(label = rownames(scores)),
+                    color = "grey30",
+                    min.segment.length = unit(0.5, 'lines'),
+                    segment.color = 'grey90') +
+    geom_point(aes(colour = cluster), size=3) +
+    stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
+    #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
+    scale_color_manual(values=color.vector) +
+    scale_fill_manual(values=color.vector) +
+    labs(x="MDS1", y="MDS2") +
+    ggtitle(title) +
+    theme_light(base_size = 14) +
+    theme(legend.position="bottom",
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text = element_blank())
+}
 
 
 plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, medgroups){

@@ -14,15 +14,61 @@ rightCensoring <- function(data, year){
   
   #Remove all rows with start date beyond right censorship (days)
   indexes = which(dataC$start>days)
+  if(length(indexes)>0){
   dataC = dataC[-indexes, ]
+  }
   
-  #Remove all rows with start date beyond right censorship (days)
+  #Right censoring of days
   indexes = which(dataC$end>days)
   dataC[indexes, "end"] = days
   
   return(dataC)
 }
 
+#TO DO
+twoTailCensoring <- function(data, startYear, endYear){
+  
+  startDays = startYear*365
+  endDays = endYear*365
+  dataC = data
+  
+  #Remove all rows with start date beyond right censorship (days)
+  indexes = which(dataC$start>endDays)
+  if(length(indexes)>0){
+  dataC = dataC[-indexes, ]
+  }
+  
+  #Remove all rows with end date befor left censorship (days)
+  indexes = which(dataC$end<startDays)
+  if(length(indexes)>0){
+    dataC = dataC[-indexes, ]
+  }
+  
+  #Right censoring of days
+  indexes = which(dataC$end>endDays)
+  dataC[indexes, "end"] = endDays
+  
+  #Left censoring of days
+  indexes = which(dataC$start<startDays)
+  dataC[indexes, "start"] = startDays
+  
+  return(dataC)
+}
+
+
+pyMedal <- function(medal="../pymedal/pymedal.py", file){
+  
+  system(paste("python3", medal, file), wait=TRUE)
+  
+  distMatrix = read.table("distance_mat.txt")
+  patientIDs = read.table("patientID.txt", sep=",")
+  
+  pID = as.vector(unlist(patientIDs))
+  colnames(distMatrix) = pID
+  rownames(distMatrix) = pID
+  
+  return(distMatrix)
+}
 
 cleanEvents <- function(data, groups){
   
