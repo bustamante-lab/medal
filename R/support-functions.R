@@ -56,6 +56,27 @@ twoTailCensoring <- function(data, startYear, endYear){
 }
 
 
+getClusterAssignement <- function(d){
+  # Create Dendrogram
+  dend <- d %>% as.dist %>%
+    hclust(method="ward.D") %>% as.dendrogram #%>%
+  #set("branches_k_color", value = color.vector2, k = k) %>% set("branches_lwd", 0.7) %>%
+  #set("labels_cex", 0.6) %>% set("labels_colors", value = "grey30", k = k) %>%
+  #set("leaves_pch", 19) %>% set("leaves_cex", 0.5)
+  #ggd1 <- as.ggdend(dend)
+  #gClust <- ggplot(ggd1, horiz = FALSE)
+  
+  pca1 = prcomp(d, scale. = FALSE)
+  hclust.assignment = cutree(dend, k)
+  scores = as.data.frame(pca1$x)
+  
+  scores = cbind(scores, cluster=as.character(hclust.assignment))
+  
+  return(scores)
+}
+
+
+
 pyMedal <- function(medal="../pymedal/pymedal.py", file){
   
   system(paste("python3", medal, file), wait=TRUE)

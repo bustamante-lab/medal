@@ -9,6 +9,7 @@
 library(ggplot2)
 library(stringr)
 library(reshape2)
+library(scales)
 
 
 mycolors <- c("penicillin"="#1b9e77",
@@ -19,22 +20,10 @@ mycolors <- c("penicillin"="#1b9e77",
               "antibody"="#e6ab02",
               "dmard"="#a6761d")
 
+daysPerMonth = 30
 
-plotMDS <- function(d, k, color.vector, title="MDS"){
-  
-  # Create Dendrogram
-  dend <- d %>% as.dist %>%
-    hclust(method="ward.D") %>% as.dendrogram #%>%
-    #set("branches_k_color", value = color.vector2, k = k) %>% set("branches_lwd", 0.7) %>%
-    #set("labels_cex", 0.6) %>% set("labels_colors", value = "grey30", k = k) %>%
-    #set("leaves_pch", 19) %>% set("leaves_cex", 0.5)
-  #ggd1 <- as.ggdend(dend)
-  #gClust <- ggplot(ggd1, horiz = FALSE)
-  
-  pca1 = prcomp(d, scale. = FALSE)
-  hclust.assignment = cutree(dend, k)
-  scores = as.data.frame(pca1$x)
-  scores = cbind(scores, cluster=as.character(hclust.assignment))
+
+plotMDS <- function(scores, color.vector, title="MDS"){
   
   # plot of observations
   gMDS1 <- ggplot(data = scores, aes(x = PC1, y = PC2)) +
@@ -209,18 +198,29 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
   #     interactions[row,col]=round(pats/length(patients), digits=1)
   #   }
   # }
+
   
-  #print(interactions)
-  
+  medlabs= c("penicillin"="pe.",
+               "cephalosporin" = "ce.",
+               "macrolide" = "ma.",
+               "nsaid" = "ns.",
+               "hydrocortisone" = "hc.",
+               "antibody" = "ab.",
+               "dmard" = "dm.")
   
   
   #Plot heatmap
   gTri <- ggplot(interactions, aes(x=A, y=B)) +
-    geom_tile(aes(alpha=value), fill="steelblue", color="gray33") +
+    #geom_tile(aes(alpha=value), fill="steelblue", color="gray33") +
+    geom_tile(aes(fill=value), color="gray33") +
     geom_text(aes(label=value)) +
-    scale_y_discrete(limits=rev(medications)) +
-    scale_x_discrete(limits=medications) +
-    ggtitle(paste("Co-occurrence in cluster", cluster)) +
+    #scale_y_discrete(limits=rev(medications)) +
+    scale_y_discrete(limits=rev(medications), labels=medlabs) +
+    #scale_x_discrete(limits=medications) +
+    scale_x_discrete(limits=medications, labels=medlabs) +
+    scale_fill_gradient2(low="white", mid="gray", midpoint=0.5, high="red") +
+    ggtitle(paste("Cluster", cluster)) +
+    theme_light(base_size = 14) +
     theme(#Add a title
       plot.title = element_text(hjust = 0, size=15),
       #Remove elements
@@ -235,8 +235,8 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
       axis.ticks.y=element_blank(),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
-      panel.background = element_blank(),
-      panel.border = element_rect(colour = "black", fill=NA, size=1)
+      panel.background = element_blank()
+      #panel.border = element_rect(colour = "black", fill=NA, size=1)
     )
   
   return(gTri)

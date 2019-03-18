@@ -88,13 +88,13 @@ data5 = rightCensoring(data, 5)
 data6 = rightCensoring(data, 6)
 data7 = rightCensoring(data, 7)
 
-data1 = twoTailCensoring(data, 0, 1)
-data2 = twoTailCensoring(data, 1, 2)
-data3 = twoTailCensoring(data, 2, 3)
-data4 = twoTailCensoring(data, 3, 4)
-data5 = twoTailCensoring(data, 4, 5)
-data6 = twoTailCensoring(data, 5, 6)
-data7 = twoTailCensoring(data, 6, 7)
+data1 = twoTailCensoring(data, 0, 2)
+data2 = twoTailCensoring(data, 1, 3)
+data3 = twoTailCensoring(data, 2, 4)
+data4 = twoTailCensoring(data, 3, 5)
+data5 = twoTailCensoring(data, 4, 6)
+data6 = twoTailCensoring(data, 5, 7)
+data7 = twoTailCensoring(data, 6, 8)
 
 write.csv(data1, "../../clinical/data-matrix-clean-1year.csv")
 write.csv(data2, "../../clinical/data-matrix-clean-2year.csv")
@@ -169,12 +169,15 @@ year7 <- pyMedal(file ="../../clinical/data-matrix-clean-7year.csv")
 #e = d
 #d = d[-6,]
 #d = d[,-6]
-#color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#0080ff")
+color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#0080ff")
 #color.vector2 = c("3"="#0080ff", "2"="#ca3542", "1"="#e8a631")
 
 #for PCAs and dendrogram
-color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
-color.vector2 = c("3"="#00a572", "4"="#0080ff", "2"="#ca3542", "1"="#e8a631")
+#color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
+#color.vector2 = c("3"="#00a572", "4"="#0080ff", "2"="#ca3542", "1"="#e8a631")
+
+color.vector3 = c("2"="#e8a631", "1"="#ca3542", "3"="#0080ff")
+
 
 #-------
 
@@ -187,55 +190,99 @@ e = year1
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-gMDS1 <- plotMDS(e, k, color.vector, "Year 1")
+clus = getClusterAssignement(e)
+gMDS <- plotMDS(clus, color.vector, "Year 0-2")
+prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
+gTri1 <- plotCoOcurrenceTriangle(1, data1, prof, names(medgroups))
+gTri2 <- plotCoOcurrenceTriangle(2, data1, prof, names(medgroups))
+gTri3 <- plotCoOcurrenceTriangle(3, data1, prof, names(medgroups))
+gpanels1 <- ggarrange(gMDS, gTri1, gTri2, gTri3,
+                     ncol = 1, nrow = 4, legend="none", common.legend = FALSE)
 
 
 e = year2
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-gMDS2 <- plotMDS(e, k, color.vector, "Year 2")
-
+clus = getClusterAssignement(e)
+gMDS <- plotMDS(clus, color.vector, "Year 1-3")
+prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
+gTri1 <- plotCoOcurrenceTriangle(1, data1, prof, names(medgroups))
+gTri2 <- plotCoOcurrenceTriangle(2, data1, prof, names(medgroups))
+gTri3 <- plotCoOcurrenceTriangle(3, data1, prof, names(medgroups))
+gpanels2 <- ggarrange(gMDS, gTri1, gTri2, gTri3,
+                      ncol = 1, nrow = 4, legend="none", common.legend = FALSE)
 
 e = year3
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-gMDS3 <- plotMDS(e, k, color.vector, "Year 3")
+clus = getClusterAssignement(e)
+gMDS <- plotMDS(clus, color.vector, "Year 2-4")
+prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
+gTri1 <- plotCoOcurrenceTriangle(1, data1, prof, names(medgroups))
+gTri2 <- plotCoOcurrenceTriangle(2, data1, prof, names(medgroups))
+gTri3 <- plotCoOcurrenceTriangle(3, data1, prof, names(medgroups))
+gpanels3 <- ggarrange(gMDS, gTri1, gTri2, gTri3,
+                      ncol = 1, nrow = 4, legend="none", common.legend = FALSE)
 
 e = year4
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-gMDS4 <- plotMDS(e, k, color.vector, "Year 4")
+clus = getClusterAssignement(e)
+gMDS <- plotMDS(clus, color.vector, "Year 3-5")
+prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
+gTri1 <- plotCoOcurrenceTriangle(1, data1, prof, names(medgroups))
+gTri2 <- plotCoOcurrenceTriangle(2, data1, prof, names(medgroups))
+gTri3 <- plotCoOcurrenceTriangle(3, data1, prof, names(medgroups))
+gpanels4 <- ggarrange(gMDS, gTri1, gTri2, gTri3,
+                      ncol = 1, nrow = 4, legend="none", common.legend = FALSE)
 
 
 e = year5
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-gMDS5 <- plotMDS(e, k, color.vector, "Year 5")
+clus = getClusterAssignement(e)
+gMDS <- plotMDS(clus, color.vector, "Year 4-6")
+prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
+gTri1 <- plotCoOcurrenceTriangle(1, data1, prof, names(medgroups))
+gTri2 <- plotCoOcurrenceTriangle(2, data1, prof, names(medgroups))
+gTri3 <- plotCoOcurrenceTriangle(3, data1, prof, names(medgroups))
+gpanels5 <- ggarrange(gMDS, gTri1, gTri2, gTri3,
+                      ncol = 1, nrow = 4, legend="none", common.legend = FALSE)
 
-e = year6
-ind = which(names(e)=="37")
-e = e[-ind,]
-e = e[,-ind]
-gMDS6 <- plotMDS(e, k, color.vector, "Year 6")
 #-------
-gpanels <- ggarrange(gMDS1, gMDS2, gMDS3,gMDS4, gMDS5,
-                     ncol = 3, nrow = 2, legend="bottom", common.legend = TRUE)
-ggexport(gpanels, filename="../images/Figure2-mds-years-ind.png", height = 3000, width = 4000, res=300)
+gpanels <- ggarrange(gpanels1, gpanels2, gpanels3, gpanels4, gpanels5, 
+                     ncol = 5, nrow = 1, legend="bottom", common.legend = FALSE)
+#ggexport(gpanels, filename="../images/Figure2-mds-years-two.png", height = 1200, width = 5000, res=300)
+ggexport(gpanels, filename="../images/Figure2-mds-years-two.png", height = 3000, width = 4000, res=300)
 
 
 
-#K-means clustering
-#k2 <- kmeans(d, centers = k, nstart = 25)
 
-#Calculating Normalized Mutual Information
-#NMI(k2$cluster, hclust.assignment, variant="sum")
-#https://course.ccs.neu.edu/cs6140sp15/7_locality_cluster/Assignment-6/NMI.pdf
+#-------
+# Inspect medication usage
+#-------
+
+medcolors= c("penicillin"="#66c2a5",
+             "cephalosporin" = "#fc8d62",
+             "macrolide" = "#8da0cb",
+             "nsaid" = "#e7298a",
+             "hydrocortisone" = "#a6d854",
+             "antibody" = "#ffd92f",
+             "dmard" = "#e5c494")
 
 
-#Saving the cluster to profiles
-#write.csv(cbind(profiles, cluster=hclust.assignment),
-#          "../../clinical/data-matrix-profiles-cluster.csv")
+#Get all triangles
+gTri1 <- plotCoOcurrenceTriangle(1, events, profiles, names(medgroups))
+gTri2 <- plotCoOcurrenceTriangle(2, events, profiles, names(medgroups))
+gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups))
+
+#Save plot
+gpanels <- ggarrange(gTri1, gTri2, gTri3, 
+                     labels = c("", "", ""),
+                     ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
+ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, width = 5000, res=300)
+

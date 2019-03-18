@@ -89,7 +89,7 @@ medcolors= c("penicillin"="#66c2a5",
 
 clusters = unique(sort(profiles$cluster))
 years = 7
-daysPerMonth = 30
+
 n = years*12 #7 years
 m = length(names(medgroups))
 
