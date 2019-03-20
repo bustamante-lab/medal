@@ -8,14 +8,14 @@
 
 
 rightCensoring <- function(data, year){
-
+  
   days = year*365
   dataC = data
   
-  #Remove all rows with start date beyond right censorship (days)
+  #Remove all rows with start date beyond right censoring (days)
   indexes = which(dataC$start>days)
   if(length(indexes)>0){
-  dataC = dataC[-indexes, ]
+    dataC = dataC[-indexes, ]
   }
   
   #Right censoring of days
@@ -30,7 +30,7 @@ rightCensoringMonths <- function(data, year){
   months = year*12
   dataC = data
   
-  #Remove all rows with start date beyond right censorship (months)
+  #Remove all rows with start date beyond right censoring (months)
   indexes = which(dataC$start>months)
   if(length(indexes)>0){
     dataC = dataC[-indexes, ]
@@ -49,13 +49,13 @@ twoTailCensoring <- function(data, startYear, endYear){
   endDays = endYear*365
   dataC = data
   
-  #Remove all rows with start date beyond right censorship (days)
+  #Remove all rows with start date beyond right censoring (days)
   indexes = which(dataC$start>endDays)
   if(length(indexes)>0){
-  dataC = dataC[-indexes, ]
+    dataC = dataC[-indexes, ]
   }
   
-  #Remove all rows with end date befor left censorship (days)
+  #Remove all rows with end date befor left censoring (days)
   indexes = which(dataC$end<startDays)
   if(length(indexes)>0){
     dataC = dataC[-indexes, ]
@@ -64,36 +64,31 @@ twoTailCensoring <- function(data, startYear, endYear){
   #Right censoring of days
   indexes = which(dataC$end>endDays)
   if(length(indexes)>0){
-  dataC[indexes, "end"] = endDays
+    dataC[indexes, "end"] = endDays
   }
   
   #Left censoring of days
   indexes = which(dataC$start<startDays)
   if(length(indexes)>0){
-  dataC[indexes, "start"] = startDays
+    dataC[indexes, "start"] = startDays
   }
   
   return(dataC)
 }
 
-#TO DO:
-rightTailCensoringExclusive <- function(data, endYear){
+rightCensoringExclusive <- function(data, endYear){
   
-  start=0
-  end=endYear
+  dataC = twoTailCensoring(data, 0, 1)
   
-  for(year in 1:endYear){
-    
+  for(i in 1:(endYear-1)){
+    dataC = rbind(dataC, twoTailCensoring(data, i, (i+1)))
   }
-  dataC = 
-  
-
   
   return(dataC)
 }
 
 
-getClusterAssignement <- function(d){
+getHierarchicalClusteringPCA <- function(d, k){
   # Create Dendrogram
   dend <- d %>% as.dist %>%
     hclust(method="ward.D") %>% as.dendrogram #%>%
@@ -110,6 +105,45 @@ getClusterAssignement <- function(d){
   scores = cbind(scores, cluster=as.character(hclust.assignment))
   
   return(scores)
+}
+
+getKMeansClusteringPCA <- function(d, k){
+  
+  #K-means clustering
+  k2 <- kmeans(d, centers = k, nstart = 25)
+  
+  pca1 = prcomp(d, scale. = FALSE)
+  scores = as.data.frame(pca1$x)
+  
+  scores = cbind(scores, cluster=as.character(k2$cluster))
+  
+  return(scores)
+}
+
+getKMeansClusteringTSNE <- function(d, k){
+  
+  #K-means clustering
+  k2 <- kmeans(d, centers = k, nstart = 25)
+  
+  # TSNE
+  tsne1 = as.data.frame(tsne(d, k))
+  
+  tsne1 = cbind(tsne1, cluster=as.character(k2$cluster))
+  
+  return(tsne1)
+}
+
+getHierarchicalClusteringTSNE <- function(d, k){
+  # Create Dendrogram
+  dend <- d %>% as.dist %>%
+    hclust(method="ward.D") %>% as.dendrogram 
+  hclust.assignment = cutree(dend, k)
+  
+  tsne1 = as.data.frame(tsne(d, k))
+  
+  tsne1 = cbind(tsne1, cluster=as.character(hclust.assignment))
+  
+  return(tsne1)
 }
 
 
@@ -161,7 +195,7 @@ cleanEvents <- function(data, groups){
   
   # Group by class of medication
   data$medication <- tolower(data$medication)
-
+  
   # for(medclass in names(groups)){
   #   print(toupper(medclass))
   #   for(med in groups[[medclass]]){
@@ -169,7 +203,7 @@ cleanEvents <- function(data, groups){
   #   }
   #   print("-----")
   # }
-
+  
   #Group together all medications of the same class
   for(medclass in names(groups)){
     indexes = which(data$medication %in% groups[[medclass]])

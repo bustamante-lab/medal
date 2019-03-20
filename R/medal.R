@@ -19,6 +19,7 @@ library(factoextra)
 library(NbClust)
 library(cluster)
 library(aricode)
+library(tsne)
 
 source("medal-functions.R")
 source("support-functions.R")
@@ -65,7 +66,7 @@ outcomes = outcomes[rows,c("id", "gi_new", "daysSinceBirth")]
 
 
 
-# Step 2. Clean Data ------------------------------
+# Step 2. Clean Data --------------------------------------------------
 
 
 # Group by class of medication
@@ -81,13 +82,13 @@ medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
 
 data = cleanEvents(events, medgroups)
 
-data = twoTailCensoring(data, 0, 2)
+data = rightCensoring(data, 2)
 
 write.csv(data, "../../clinical/data-matrix-clean.csv")
 
 
 
-# Step 3. Create a distance matrix ----------------------
+# Step 3. Create a distance matrix --------------------------------------------------
 
 
 #-------
@@ -103,7 +104,7 @@ pID = as.vector(unlist(patientIDs))
 colnames(distMatrix) = pID
 rownames(distMatrix) = pID
 
-# Step 4.1 Choose number of clusters ----------------------
+# Step 4 Choose number of clusters --------------------------------------------------
 
 #d = scale(distMatrix, center=FALSE)
 d = distMatrix
@@ -113,16 +114,17 @@ d = distMatrix
 #remInd = which(names(d)=="37")
 #d = d[-remInd,]
 #d = d[,-remInd]
-k=3
+k=4
 
 # Elbow method
 elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
-  geom_vline(xintercept = k, linetype = 2) +
+  geom_vline(xintercept = k, linetype = "dotted", color="firebrick1", size=1.5) +
   labs(title = "Elbow method")
+
 # Silhouette method
 silhouette <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette", 
                            print.summary = FALSE) +
-  geom_vline(xintercept = k, linetype = 2) +
+  geom_vline(xintercept = k, linetype = "dotted", color="firebrick1", size=1.5) +
   labs(title = "Silhouette method")
 # Gap statistic
 # nboot = 50 to keep the function speedy. 
@@ -132,7 +134,7 @@ set.seed(123)
 gapStat <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
                         method = "gap_stat", nboot = 50, print.summary = FALSE,
                         maxSE=list(method="Tibs2001SEmax", SE.factor=1)) +
-  geom_vline(xintercept = k, linetype = 2) +
+  geom_vline(xintercept = k, linetype = "dotted", color="firebrick1", size=1.5) +
   labs(title = "Gap statistic method")
 
 gpanels <- ggarrange(elbow, silhouette, gapStat,
@@ -143,95 +145,39 @@ ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 3000, 
 
 
 
-# Step 4.1 Plot a dendrogram ----------------------
+# Step 5 Plots --------------------------------------------------------------
 
-k = 4 # on visual inspection of previous figure (with 37)
-k=3 #without outlier37
-#k=2
+#Colors to be used
+color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
 
-#removing outlier 37 (index 6)
-#k = 3
-#e = d
-#d = d[-6,]
-#d = d[,-6]
-color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#0080ff")
-color.vector2 = c("3"="#0080ff", "2"="#ca3542", "1"="#e8a631")
+#Plot Clustering strategies
 
-#for PCAs and dendrogram
-#color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
-#color.vector2 = c("3"="#00a572", "4"="#0080ff", "2"="#ca3542", "1"="#e8a631")
+hclus = getHierarchicalClusteringPCA(d, k)
+gMDSclus12 <- plotMDS(hclus, color.vector, 1, 2, "MDS (hierarchical clustering)")
+gMDSclus34 <- plotMDS(hclus, color.vector, 3, 4, "MDS (hierarchical clustering)")
 
-#-------
-# Create Dendrogram
-dend <- d %>% as.dist %>%
-  hclust(method="ward.D") %>% as.dendrogram %>%
-  set("branches_k_color", value = color.vector2, k = k) %>% set("branches_lwd", 0.7) %>%
-  set("labels_cex", 0.6) %>% set("labels_colors", value = "grey30", k = k) %>%
-  set("leaves_pch", 19) %>% set("leaves_cex", 0.5)
-ggd1 <- as.ggdend(dend)
-gClust <- ggplot(ggd1, horiz = FALSE)
-
-#-------
-# Create MDS
-pca1 = prcomp(d, scale. = FALSE)
-hclust.assignment = cutree(dend, k)
-scores = as.data.frame(pca1$x)
-scores = cbind(scores, cluster=as.character(hclust.assignment))
-
-# plot of observations
-gPCA12 <- ggplot(data = scores, aes(x = PC1, y = PC2)) +
-  geom_text_repel(aes(label = rownames(scores)),
-                  color = "grey30",
-                  min.segment.length = unit(0.5, 'lines'),
-                  segment.color = 'grey90') +
-  geom_point(aes(colour = cluster), size=3) +
-  stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
-  #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
-  scale_color_manual(values=color.vector) +
-  scale_fill_manual(values=color.vector) +
-  labs(x="MDS1", y="MDS2") +
-  ggtitle("MDS1 vs MDS2") +
-  theme_light(base_size = 14) +
-  theme(legend.position="bottom",
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank())
+kmeans = getKMeansClusteringPCA(d, k)
+gMDSkmeans12 <- plotMDS(kmeans, color.vector, 1, 2, "MDS (k-means)")
+gMDSkmeans34 <- plotMDS(kmeans, color.vector, 3, 4, "MDS (k-means)")
 
 
-gPCA23 <- ggplot(data = scores, aes(x = PC2, y = PC3)) +
-  geom_text_repel(aes(label = rownames(scores)),
-                  color = "grey30",
-                  min.segment.length = unit(0.5, 'lines'),
-                  segment.color = 'grey90') +
-  geom_point(aes(colour = cluster), size=3) +
-  stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
-  #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
-  scale_color_manual(values=color.vector) +
-  scale_fill_manual(values=color.vector) +
-  labs(x="MDS2", y="MDS3") +
-  ggtitle("MDS2 vs MDS3") +
-  theme_light(base_size = 14) +
-  theme(legend.position="bottom",
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank())
-
-#-------
-gpanels <- ggarrange(gClust, 
-                     ggarrange(gPCA12, gPCA23,
-                               ncol = 2, nrow=1, 
-                               labels = c("B", "C"),
-                               legend="bottom", common.legend = TRUE),
-                     labels = c("A"),
-                     ncol = 1, nrow = 2, legend="bottom", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure2-dendro-mds.png", height = 3000, width = 4000, res=300)
+# tsne1 = getHierarchicalClusteringTSNE(d, k)
+# gTSNEclus <- plotTSNE(tsne1, color.vector, "TSNE (hierarchical clustering)")
+# 
+# tsne2 = getKMeansClusteringTSNE(d, k)
+# gTSNEkmeans <- plotTSNE(tsne2, color.vector, "TSNE (k-means)")
 
 
+# Combine plots and save
+gpanels <- ggarrange(gMDSclus12, gMDSclus34, gMDSkmeans12, gMDSkmeans34,
+                               ncol = 2, nrow=2, 
+                               labels = c("A", "B", "C", "D"),
+                               legend="bottom", common.legend = TRUE)
+ggexport(gpanels, filename="../images/Figure2-mds.png", height = 3000, width = 4000, res=300)
 
-#K-means clustering
-k2 <- kmeans(d, centers = k, nstart = 25)
+
+#--------------------------------------------------
+
 
 #Calculating Normalized Mutual Information
 NMI(k2$cluster, hclust.assignment, variant="sum")

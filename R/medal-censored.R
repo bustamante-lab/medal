@@ -80,23 +80,23 @@ medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
 
 
 data = cleanEvents(events, medgroups)
-# data1 = rightCensoring(data, 1)
-# data2 = rightCensoring(data, 2)
-# data3 = rightCensoring(data, 3)
-# data4 = rightCensoring(data, 4)
-# data5 = rightCensoring(data, 5)
-# data6 = rightCensoring(data, 6)
-# data7 = rightCensoring(data, 7)
+data1 = rightCensoringExclusive(data, 1)
+data2 = rightCensoringExclusive(data, 2)
+data3 = rightCensoringExclusive(data, 3)
+data4 = rightCensoringExclusive(data, 4)
+data5 = rightCensoringExclusive(data, 5)
+data6 = rightCensoringExclusive(data, 6)
+data7 = rightCensoringExclusive(data, 7)
 
-data1 = twoTailCensoring(data, 0, 1)
-data2 = twoTailCensoring(data, 0, 2)
-data3 = twoTailCensoring(data, 0, 3)
-data4 = twoTailCensoring(data, 0, 4)
-data5 = twoTailCensoring(data, 0, 5)
-data6 = twoTailCensoring(data, 0, 6)
-data7 = twoTailCensoring(data, 0, 7)
+#data1 = twoTailCensoring(data, 0, 1)
+#data2 = twoTailCensoring(data, 0, 2)
+#data3 = twoTailCensoring(data, 0, 3)
+#data4 = twoTailCensoring(data, 0, 4)
+#data5 = twoTailCensoring(data, 0, 5)
+#data6 = twoTailCensoring(data, 0, 6)
+#data7 = twoTailCensoring(data, 0, 7)
 
-#write.csv(data1, "../../clinical/data-matrix-clean-1year.csv")
+write.csv(data1, "../../clinical/data-matrix-clean-1year.csv")
 write.csv(data2, "../../clinical/data-matrix-clean-2year.csv")
 write.csv(data3, "../../clinical/data-matrix-clean-3year.csv")
 write.csv(data4, "../../clinical/data-matrix-clean-4year.csv")
@@ -115,10 +115,10 @@ write.csv(data7, "../../clinical/data-matrix-clean-7year.csv")
 year1 <- pyMedal(file ="../../clinical/data-matrix-clean-1year.csv")
 year2 <- pyMedal(file ="../../clinical/data-matrix-clean-2year.csv")
 year3 <- pyMedal(file ="../../clinical/data-matrix-clean-3year.csv")
- year4 <- pyMedal(file ="../../clinical/data-matrix-clean-4year.csv")
- year5 <- pyMedal(file ="../../clinical/data-matrix-clean-5year.csv")
- year6 <- pyMedal(file ="../../clinical/data-matrix-clean-6year.csv")
-# year7 <- pyMedal(file ="../../clinical/data-matrix-clean-7year.csv")
+year4 <- pyMedal(file ="../../clinical/data-matrix-clean-4year.csv")
+year5 <- pyMedal(file ="../../clinical/data-matrix-clean-5year.csv")
+year6 <- pyMedal(file ="../../clinical/data-matrix-clean-6year.csv")
+year7 <- pyMedal(file ="../../clinical/data-matrix-clean-7year.csv")
 
 # Step 4.1 Choose number of clusters ----------------------
 
@@ -190,7 +190,7 @@ e = year1
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-clus = getClusterAssignement(e)
+clus = getHierarchicalClustering(e)
 gMDS <- plotMDS(clus, color.vector, "Years 0-1")
 prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
 gTri1 <- plotCoOcurrenceTriangle(1, data1, prof, names(medgroups))
@@ -204,7 +204,7 @@ e = year2
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-clus = getClusterAssignement(e)
+clus = getHierarchicalClustering(e)
 gMDS <- plotMDS(clus, color.vector, "Years 0-2")
 prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
 gTri1 <- plotCoOcurrenceTriangle(1, data2, prof, names(medgroups))
@@ -217,7 +217,7 @@ e = year3
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-clus = getClusterAssignement(e)
+clus = getHierarchicalClustering(e)
 gMDS <- plotMDS(clus, color.vector, "Years 0-3")
 prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
 gTri1 <- plotCoOcurrenceTriangle(1, data3, prof, names(medgroups))
@@ -230,7 +230,7 @@ e = year4
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-clus = getClusterAssignement(e)
+clus = getHierarchicalClustering(e)
 gMDS <- plotMDS(clus, color.vector, "Years 0-4")
 prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
 gTri1 <- plotCoOcurrenceTriangle(1, data4, prof, names(medgroups))
@@ -244,7 +244,7 @@ e = year5
 ind = which(names(e)=="37")
 e = e[-ind,]
 e = e[,-ind]
-clus = getClusterAssignement(e)
+clus = getHierarchicalClustering(e)
 gMDS <- plotMDS(clus, color.vector, "Years 0-5")
 prof = as.data.frame(cbind(id=rownames(clus), cluster=clus$cluster))
 gTri1 <- plotCoOcurrenceTriangle(1, data5, prof, names(medgroups))
@@ -258,7 +258,7 @@ gpanels <- ggarrange(gpanels1, gpanels2, gpanels3, gpanels4, gpanels5,
                      ncol = 5, nrow = 1, legend="bottom", common.legend = TRUE)
 #ggexport(gpanels, filename="../images/Figure2-mds-years-two.png", height = 1200, width = 5000, res=300)
 #ggexport(gpanels, filename="../images/Figure2-mds-years-two.png", height = 3000, width = 4000, res=300)
-ggexport(gpanels, filename="../images/Figure2-mds-years-alex.png", height = 3000, width = 4000, res=300)
+ggexport(gpanels, filename="../images/Figure2-mds-years-exclusive.png", height = 3000, width = 4000, res=300)
 
 
 
@@ -283,6 +283,6 @@ gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups))
 #Save plot
 gpanels <- ggarrange(gTri1, gTri2, gTri3, 
                      labels = c("", "", ""),
-                     ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
+                     ncol = 3, nrow = 1, legend="bottom", common.legend = TRUE)
 ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, width = 5000, res=300)
 

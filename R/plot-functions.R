@@ -23,10 +23,14 @@ mycolors <- c("penicillin"="#1b9e77",
 daysPerMonth = 30
 
 
-plotMDS <- function(scores, color.vector, title="MDS"){
+plotMDS <- function(score, color.vector, dim1, dim2, title="MDS"){
+  
+  nms <- names(score)
+  xname <- nms[dim1]
+  yname <- nms[dim2]
   
   # plot of observations
-  gMDS1 <- ggplot(data = scores, aes(x = PC1, y = PC2)) +
+  gMDS1 <- ggplot(data = score, aes(x = !!ensym(xname), y = !!ensym(yname))) +
     # geom_text_repel(aes(label = rownames(scores)),
     #                 color = "grey30",
     #                 min.segment.length = unit(0.5, 'lines'),
@@ -34,10 +38,35 @@ plotMDS <- function(scores, color.vector, title="MDS"){
     geom_point(aes(colour = cluster), size=2) +
     stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
     #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
-    geom_text(aes(label = rownames(scores)), color = "grey30", size=0.5) +
+    #geom_text(aes(label = rownames(scores)), color = "grey30", size=2) +
     scale_color_manual(values=color.vector) +
     scale_fill_manual(values=color.vector) +
-    labs(x="MDS1", y="MDS2") +
+    labs(x=paste("MDS", dim1,sep=""), y=paste("MDS", dim2,sep="")) +
+    ggtitle(title) +
+    theme_light(base_size = 14) +
+    theme(legend.position="bottom",
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text = element_blank()
+          )
+}
+
+plotTSNE <- function(score, color.vector, title="MDS"){
+  
+  # plot of observations
+  gMDS1 <- ggplot(data = score, aes(x = V1, y = V2)) +
+    # geom_text_repel(aes(label = rownames(scores)),
+    #                 color = "grey30",
+    #                 min.segment.length = unit(0.5, 'lines'),
+    #                 segment.color = 'grey90') +
+    geom_point(aes(colour = cluster), size=2) +
+    stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
+    #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
+    #geom_text(aes(label = rownames(scores)), color = "grey30", size=2) +
+    scale_color_manual(values=color.vector) +
+    scale_fill_manual(values=color.vector) +
+    labs(x="TSNE 1", y="TSNE 2") +
     ggtitle(title) +
     theme_light(base_size = 14) +
     theme(legend.position="bottom",
