@@ -88,7 +88,7 @@ medcolors= c("penicillin"="#66c2a5",
 
 
 clusters = unique(sort(profiles$cluster))
-years = 7
+years = 2
 
 n = years*12 #7 years
 m = length(names(medgroups))
@@ -100,13 +100,13 @@ profiles[which(profiles[,"cluster"] == 4), "cluster"] = 3
 
 
 #Get all paths
-gPath1 <- plotTimeSeriesDrug(1, events, profiles, medcolors, medgroups)
-gPath2 <- plotTimeSeriesDrug(2, events, profiles, medcolors, medgroups)
-gPath3 <- plotTimeSeriesDrug(3, events, profiles, medcolors, medgroups)
+gPath1 <- plotTimeSeriesDrug(1, events, profiles, medcolors, medgroups, years)
+gPath2 <- plotTimeSeriesDrug(2, events, profiles, medcolors, medgroups, years)
+gPath3 <- plotTimeSeriesDrug(3, events, profiles, medcolors, medgroups, years)
 
 
 #Save plot
-gpanels <- ggarrange(gPath1, gPath2, gPath3, 
+gpanels <- ggarrange(gPath1, gPath2, #gPath3, 
                      labels = c("", "", ""),
                      ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
 ggexport(gpanels, filename="../images/Figure3-clusters.png", height = 4000, width = 5000, res=300)

@@ -81,6 +81,8 @@ medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
 
 data = cleanEvents(events, medgroups)
 
+data = twoTailCensoring(data, 0, 2)
+
 write.csv(data, "../../clinical/data-matrix-clean.csv")
 
 
@@ -107,19 +109,20 @@ rownames(distMatrix) = pID
 d = distMatrix
 
 # Remove outlier (patient 37)
-e=d
-remInd = which(names(d)=="37")
-d = d[-remInd,]
-d = d[,-remInd]
+#e=d
+#remInd = which(names(d)=="37")
+#d = d[-remInd,]
+#d = d[,-remInd]
+k=3
 
 # Elbow method
 elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
-  geom_vline(xintercept = 4, linetype = 2) +
+  geom_vline(xintercept = k, linetype = 2) +
   labs(title = "Elbow method")
 # Silhouette method
 silhouette <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette", 
                            print.summary = FALSE) +
-  geom_vline(xintercept = 4, linetype = 2) +
+  geom_vline(xintercept = k, linetype = 2) +
   labs(title = "Silhouette method")
 # Gap statistic
 # nboot = 50 to keep the function speedy. 
@@ -129,7 +132,7 @@ set.seed(123)
 gapStat <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
                         method = "gap_stat", nboot = 50, print.summary = FALSE,
                         maxSE=list(method="Tibs2001SEmax", SE.factor=1)) +
-  geom_vline(xintercept = 4, linetype = 2) +
+  geom_vline(xintercept = k, linetype = 2) +
   labs(title = "Gap statistic method")
 
 gpanels <- ggarrange(elbow, silhouette, gapStat,
@@ -144,6 +147,7 @@ ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 3000, 
 
 k = 4 # on visual inspection of previous figure (with 37)
 k=3 #without outlier37
+#k=2
 
 #removing outlier 37 (index 6)
 #k = 3
@@ -222,7 +226,7 @@ gpanels <- ggarrange(gClust,
                                legend="bottom", common.legend = TRUE),
                      labels = c("A"),
                      ncol = 1, nrow = 2, legend="bottom", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure2-dendro-mds-rem37.png", height = 3000, width = 4000, res=300)
+ggexport(gpanels, filename="../images/Figure2-dendro-mds.png", height = 3000, width = 4000, res=300)
 
 
 

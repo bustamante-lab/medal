@@ -25,7 +25,24 @@ rightCensoring <- function(data, year){
   return(dataC)
 }
 
-#TO DO
+rightCensoringMonths <- function(data, year){
+  
+  months = year*12
+  dataC = data
+  
+  #Remove all rows with start date beyond right censorship (months)
+  indexes = which(dataC$start>months)
+  if(length(indexes)>0){
+    dataC = dataC[-indexes, ]
+  }
+  
+  #Right censoring of months
+  indexes = which(dataC$end>months)
+  dataC[indexes, "end"] = months
+  
+  return(dataC)
+}
+
 twoTailCensoring <- function(data, startYear, endYear){
   
   startDays = startYear*365
@@ -46,11 +63,31 @@ twoTailCensoring <- function(data, startYear, endYear){
   
   #Right censoring of days
   indexes = which(dataC$end>endDays)
+  if(length(indexes)>0){
   dataC[indexes, "end"] = endDays
+  }
   
   #Left censoring of days
   indexes = which(dataC$start<startDays)
+  if(length(indexes)>0){
   dataC[indexes, "start"] = startDays
+  }
+  
+  return(dataC)
+}
+
+#TO DO:
+rightTailCensoringExclusive <- function(data, endYear){
+  
+  start=0
+  end=endYear
+  
+  for(year in 1:endYear){
+    
+  }
+  dataC = 
+  
+
   
   return(dataC)
 }

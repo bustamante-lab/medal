@@ -27,13 +27,14 @@ plotMDS <- function(scores, color.vector, title="MDS"){
   
   # plot of observations
   gMDS1 <- ggplot(data = scores, aes(x = PC1, y = PC2)) +
-    geom_text_repel(aes(label = rownames(scores)),
-                    color = "grey30",
-                    min.segment.length = unit(0.5, 'lines'),
-                    segment.color = 'grey90') +
-    geom_point(aes(colour = cluster), size=3) +
+    # geom_text_repel(aes(label = rownames(scores)),
+    #                 color = "grey30",
+    #                 min.segment.length = unit(0.5, 'lines'),
+    #                 segment.color = 'grey90') +
+    geom_point(aes(colour = cluster), size=2) +
     stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
     #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
+    geom_text(aes(label = rownames(scores)), color = "grey30", size=0.5) +
     scale_color_manual(values=color.vector) +
     scale_fill_manual(values=color.vector) +
     labs(x="MDS1", y="MDS2") +
@@ -47,7 +48,7 @@ plotMDS <- function(scores, color.vector, title="MDS"){
 }
 
 
-plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, medgroups){
+plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, medgroups, years){
   #Get the events for patients in a cluster
   patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
   eveIDs = which(events[,"id"] %in% patIDs)
@@ -66,6 +67,8 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
   for(med in names(medgroups)){
     medIDs = which(pat[,"medication"]==med)
     clusterEvents = pat[medIDs,]
+    clusterEvents = rightCensoringMonths(clusterEvents, years)
+    
     for(i in 1:dim(clusterEvents)[1]){
       x = clusterEvents[i,"medication"]
       start = clusterEvents[i,"start"]
@@ -95,18 +98,21 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
   
   #Plot heatmap
   gPaths <- ggplot(melted_drug, aes(x=month, y=value)) +
-    geom_path(aes(color = med), size=5, alpha=0.8) +
-    geom_smooth(method="loess", color="gray30", se=FALSE, size=1.2, linetype = "dashed") +
+    geom_path(aes(color = med), size=5, lineend = "round") +
+    geom_area(aes(fill = med), color=NA, alpha=0.3) +
+    #geom_smooth(method="loess", color="gray30", se=FALSE, size=1.2, linetype = "dashed") +
     #Group by medication
     facet_wrap(.~med, ncol=1, scales="free_y") +
     #Reshape the scales
     scale_y_continuous(limits=c(0,1),
                        breaks = c(0,0.5,1),
                        labels = rev(c("all patients", "some", "none"))) +
-    scale_x_continuous(breaks=c(seq(0, years, 1)*12),
+    scale_x_continuous(limits=c(0,years*12),
+      breaks=c(seq(0, years, 1)*12),
                        labels=c(paste("year", seq(0,years, 1))))+
     #custom colours
     scale_color_manual(values=medcolors) +
+    scale_fill_manual(values=medcolors) +
     #Add labels
     labs(title=paste("Medication usage in cluster", cluster), x="Years of follow-up") +
     #set base size for all font elements
@@ -218,7 +224,7 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
     scale_y_discrete(limits=rev(medications), labels=medlabs) +
     #scale_x_discrete(limits=medications) +
     scale_x_discrete(limits=medications, labels=medlabs) +
-    scale_fill_gradient2(low="white", mid="gray", midpoint=0.5, high="red") +
+    scale_fill_gradient2(low="white", mid="gray", midpoint=0.5, high="orangered") +
     ggtitle(paste("Cluster", cluster)) +
     theme_light(base_size = 14) +
     theme(#Add a title
