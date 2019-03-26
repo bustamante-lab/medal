@@ -10,12 +10,12 @@
 remove(list=ls())
 
 #library(magrittr)
-#library(ggplot2)
-#library(ggpubr)
-#library(ggrepel)
+library(ggplot2)
+library(ggpubr)
+library(ggrepel)
 
-#library(factoextra)
-#library(NbClust)
+library(factoextra)
+library(NbClust)
 #library(cluster)
 #library(aricode)
 #library(tsne)
@@ -192,5 +192,7 @@ ggexport(gpanels, filename="../images/Figure2-dendro-mds.png", height = 4000, wi
 
 
 #Saving the cluster to profiles
-#write.csv(cbind(profiles, cluster=hclust.assignment),
-#          "../../clinical/data-matrix-profiles-cluster.csv")
+assignment = cutree(dend,k)
+index = which(profiles$id %in% names(assignment))
+write.csv(cbind(profiles[index,], cluster=assignment),
+          "../../clinical/data-matrix-profiles-cluster.csv")

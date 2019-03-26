@@ -179,7 +179,7 @@ def getSequences(data):
 
     return patientInfo
 
-@njit(nb.int32[:,:](nb.int8[:], nb.int8[:], nb.int32[:,:]), nogil=True,  parallel=True, cache=True)
+@njit(nb.int32[:,:](nb.int8[:], nb.int8[:], nb.int32[:,:]), nogil=True,  parallel=False, cache=True)
 def paths(seq1, seq2, mat):
     """
     Uses the medal algorithm to populate a cost matrix for different paths.

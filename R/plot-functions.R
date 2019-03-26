@@ -11,6 +11,7 @@ library(stringr)
 library(reshape2)
 library(scales)
 library(dendextend)
+library(MASS)
 
 
 
@@ -48,7 +49,9 @@ plotDendrogram <- function(dend, k, title="Dendrogram (hierarchical clustering)"
 plotMDS <- function(d, dend, color.vector=mycolors, dim1, dim2, title="MDS"){
   
   #Merge cluster and data
-  score = as.data.frame(prcomp(d, scale. = FALSE)$x)
+  score = isoMDS(as.matrix(d), k=4)
+  score = as.data.frame(score$points)
+  #score = as.data.frame(prcomp(d, scale. = FALSE)$x)
   score$cluster = as.character(cutree(dend, k))
   
   #Get axis names
