@@ -10,6 +10,8 @@ library(ggplot2)
 library(stringr)
 library(reshape2)
 library(scales)
+library(dendextend)
+
 
 
 mycolors <- c("penicillin"="#1b9e77",
@@ -23,22 +25,47 @@ mycolors <- c("penicillin"="#1b9e77",
 daysPerMonth = 30
 
 
-plotMDS <- function(score, color.vector, dim1, dim2, title="MDS"){
+plotDendrogram <- function(dend, k, title="Dendrogram (hierarchical clustering)"){
   
+  ggd1 <- as.ggdend(dend)
+  gClust <- ggplot(ggd1, horiz = FALSE) +
+    ggtitle(title) +
+    labs(x="Patients", y="Hierarchical clustering height") +
+    theme_light(base_size = 14) +
+    theme(legend.position="bottom",
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.ticks = element_blank(),
+          axis.text = element_blank()
+          #axis.title = element_blank()
+    )
+  
+  return(gClust)
+  
+  
+}
+
+plotMDS <- function(d, dend, color.vector=mycolors, dim1, dim2, title="MDS"){
+  
+  #Merge cluster and data
+  score = as.data.frame(prcomp(d, scale. = FALSE)$x)
+  score$cluster = as.character(cutree(dend, k))
+  
+  #Get axis names
   nms <- names(score)
   xname <- nms[dim1]
   yname <- nms[dim2]
   
   # plot of observations
   gMDS1 <- ggplot(data = score, aes(x = !!ensym(xname), y = !!ensym(yname))) +
-    # geom_text_repel(aes(label = rownames(scores)),
-    #                 color = "grey30",
-    #                 min.segment.length = unit(0.5, 'lines'),
-    #                 segment.color = 'grey90') +
+     geom_text_repel(aes(label = rownames(score), color=cluster),
+                     #color = "grey30",
+                     min.segment.length = unit(0.5, 'lines'),
+                     segment.color = 'grey90', show.legend = FALSE) +
     geom_point(aes(colour = cluster), size=2) +
     stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
     #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
-    #geom_text(aes(label = rownames(scores)), color = "grey30", size=2) +
+    #geom_text(aes(label = rownames(score)), color = "grey30", size=2) +
     scale_color_manual(values=color.vector) +
     scale_fill_manual(values=color.vector) +
     labs(x=paste("MDS", dim1,sep=""), y=paste("MDS", dim2,sep="")) +
@@ -50,6 +77,9 @@ plotMDS <- function(score, color.vector, dim1, dim2, title="MDS"){
           axis.ticks = element_blank(),
           axis.text = element_blank()
           )
+  
+  return(gMDS1)
+  
 }
 
 plotTSNE <- function(score, color.vector, title="MDS"){

@@ -9,19 +9,18 @@
 
 remove(list=ls())
 
-library(magrittr)
-library(ggplot2)
-library(ggpubr)
-library(ggrepel)
+#library(magrittr)
+#library(ggplot2)
+#library(ggpubr)
+#library(ggrepel)
 
-library(dendextend)
-library(factoextra)
-library(NbClust)
-library(cluster)
-library(aricode)
-library(tsne)
+#library(factoextra)
+#library(NbClust)
+#library(cluster)
+#library(aricode)
+#library(tsne)
 
-source("medal-functions.R")
+#source("medal-functions.R")
 source("support-functions.R")
 source("plot-functions.R")
 
@@ -118,7 +117,7 @@ k=4
 
 # Elbow method
 elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
-  geom_vline(xintercept = k, linetype = "dotted", color="firebrick1", size=1.5) +
+  geom_vline(xintercept = k, linetype = "dashed", color="#5581B0", size=0.6) +
   labs(title = "Elbow method")
 
 # Silhouette method
@@ -134,14 +133,14 @@ set.seed(123)
 gapStat <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
                         method = "gap_stat", nboot = 50, print.summary = FALSE,
                         maxSE=list(method="Tibs2001SEmax", SE.factor=1)) +
-  geom_vline(xintercept = k, linetype = "dotted", color="firebrick1", size=1.5) +
+  #geom_vline(xintercept = k, linetype = "dotted", color="firebrick1", size=1.5) +
   labs(title = "Gap statistic method")
 
-gpanels <- ggarrange(elbow, silhouette, gapStat,
-                     labels = c("A", "B", "C"),
-                     ncol = 1, nrow = 3, legend="bottom", 
+gpanels <- ggarrange(elbow, gapStat,
+                     labels = c("A", "B"),
+                     ncol = 2, nrow = 1, legend="bottom", 
                      align="v", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 3000, width = 2000, res=300)
+ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 2000, width = 4000, res=300)
 
 
 
@@ -149,16 +148,19 @@ ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 3000, 
 
 #Colors to be used
 color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
+color.vector2 = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
+#mycolors = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
 
 #Plot Clustering strategies
 
-hclus = getHierarchicalClusteringPCA(d, k)
-gMDSclus12 <- plotMDS(hclus, color.vector, 1, 2, "MDS (hierarchical clustering)")
-gMDSclus34 <- plotMDS(hclus, color.vector, 3, 4, "MDS (hierarchical clustering)")
+dend = getDendrogram(d, k, color.vector)
+gDend <- plotDendrogram(dend, k)
+gMDSclus12 <- plotMDS(d, dend, color.vector, 1, 2, "MDS (hierarchical clustering)")
+gMDSclus34 <- plotMDS(d, dend, color.vector, 3, 4, "MDS (hierarchical clustering)")
 
 kmeans = getKMeansClusteringPCA(d, k)
-gMDSkmeans12 <- plotMDS(kmeans, color.vector, 1, 2, "MDS (k-means)")
-gMDSkmeans34 <- plotMDS(kmeans, color.vector, 3, 4, "MDS (k-means)")
+#gMDSkmeans12 <- plotMDS(kmeans, color.vector, 1, 2, "MDS (k-means)")
+#gMDSkmeans34 <- plotMDS(kmeans, color.vector, 3, 4, "MDS (k-means)")
 
 
 # tsne1 = getHierarchicalClusteringTSNE(d, k)
@@ -169,21 +171,26 @@ gMDSkmeans34 <- plotMDS(kmeans, color.vector, 3, 4, "MDS (k-means)")
 
 
 # Combine plots and save
-gpanels <- ggarrange(gMDSclus12, gMDSclus34, gMDSkmeans12, gMDSkmeans34,
-                               ncol = 2, nrow=2, 
-                               labels = c("A", "B", "C", "D"),
-                               legend="bottom", common.legend = TRUE)
-ggexport(gpanels, filename="../images/Figure2-mds.png", height = 3000, width = 4000, res=300)
+gpanels <- ggarrange(gDend, 
+                     ggarrange(gMDSclus12, gMDSclus34,
+                               labels = c("B", "C"),
+                               align = "hv",
+                               legend="bottom", common.legend = TRUE),
+                     ncol = 1, nrow=2, 
+                     labels = c("A"),
+                     align = "h",
+                     legend="bottom", common.legend = TRUE)
+ggexport(gpanels, filename="../images/Figure2-dendro-mds.png", height = 4000, width = 4000, res=300)
 
 
 #--------------------------------------------------
 
 
 #Calculating Normalized Mutual Information
-NMI(k2$cluster, hclust.assignment, variant="sum")
+#NMI(k2$cluster, hclust.assignment, variant="sum")
 #https://course.ccs.neu.edu/cs6140sp15/7_locality_cluster/Assignment-6/NMI.pdf
 
 
 #Saving the cluster to profiles
-write.csv(cbind(profiles, cluster=hclust.assignment),
-          "../../clinical/data-matrix-profiles-cluster.csv")
+#write.csv(cbind(profiles, cluster=hclust.assignment),
+#          "../../clinical/data-matrix-profiles-cluster.csv")

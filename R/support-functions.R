@@ -7,6 +7,8 @@
 ###############################################################
 
 
+mycolors = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
+
 rightCensoring <- function(data, year){
   
   days = year*365
@@ -88,23 +90,47 @@ rightCensoringExclusive <- function(data, endYear){
 }
 
 
-getHierarchicalClusteringPCA <- function(d, k){
+getDendrogram <- function(d, k, color.vector=mycolors){
+  
+
   # Create Dendrogram
   dend <- d %>% as.dist %>%
-    hclust(method="ward.D") %>% as.dendrogram #%>%
-  #set("branches_k_color", value = color.vector2, k = k) %>% set("branches_lwd", 0.7) %>%
-  #set("labels_cex", 0.6) %>% set("labels_colors", value = "grey30", k = k) %>%
-  #set("leaves_pch", 19) %>% set("leaves_cex", 0.5)
+    hclust(method="ward.D") %>% as.dendrogram
+  
+  #Get color ordering
+  #hclust.assignment = cutree(dend, k)
+  assignment = cutree(dend, k)
+  order = unique(assignment[order.dendrogram(dend)])
+  ordered.colors = color.vector[order]
+  
+  dend <- dend %>% 
+    set("branches_k_color", value = ordered.colors, k = k) %>% 
+    set("branches_lwd", 0.7) %>%
+    set("labels_cex", 0.6) %>% 
+    set("labels_colors", value = "grey30", k = k) %>%
+    set("leaves_pch", 19) %>% 
+    set("leaves_cex", 0.5)
   #ggd1 <- as.ggdend(dend)
+  #ggplot(ggd1, horiz = FALSE)
+  
+  # dend <- d %>% as.dist %>%
+  #   hclust(method="ward.D") %>% as.dendrogram %>%
+  #   set("branches_k_color", value = color.vector, k = k) %>% 
+  #   set("branches_lwd", 0.7) %>%
+  #   set("labels_cex", 0.6) %>% 
+  #   set("labels_colors", value = "grey30", k = k) %>%
+  #   set("leaves_pch", 19) %>% 
+  #   set("leaves_cex", 0.5)
+  # ggd1 <- as.ggdend(dend)
   #gClust <- ggplot(ggd1, horiz = FALSE)
   
-  pca1 = prcomp(d, scale. = FALSE)
-  hclust.assignment = cutree(dend, k)
-  scores = as.data.frame(pca1$x)
+  #pca1 = prcomp(dend, scale. = FALSE)
+  #hclust.assignment = cutree(dend, k)
+  #scores = as.data.frame(pca1$x)
   
-  scores = cbind(scores, cluster=as.character(hclust.assignment))
+  #scores = cbind(scores, cluster=as.character(hclust.assignment))
   
-  return(scores)
+  return(dend)
 }
 
 getKMeansClusteringPCA <- function(d, k){
