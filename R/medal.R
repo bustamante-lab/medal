@@ -9,17 +9,20 @@
 
 remove(list=ls())
 
+#Plotting libraries
 #library(magrittr)
 library(ggplot2)
 library(ggpubr)
 library(ggrepel)
 
+#Clustering libraries
 library(factoextra)
 library(NbClust)
 #library(cluster)
 library(aricode)
 #library(tsne)
 
+#Additional functions
 #source("medal-functions.R")
 source("support-functions.R")
 source("plot-functions.R")
