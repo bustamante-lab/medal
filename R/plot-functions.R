@@ -61,10 +61,10 @@ plotMDS <- function(d, dend, color.vector=mycolors, dim1, dim2, title="MDS"){
   
   # plot of observations
   gMDS1 <- ggplot(data = score, aes(x = !!ensym(xname), y = !!ensym(yname))) +
-     geom_text_repel(aes(label = rownames(score), color=cluster),
-                     #color = "grey30",
-                     min.segment.length = unit(0.5, 'lines'),
-                     segment.color = 'grey90', show.legend = FALSE) +
+    geom_text_repel(aes(label = rownames(score), color=cluster),
+                    #color = "grey30",
+                    min.segment.length = unit(0.5, 'lines'),
+                    segment.color = 'grey90', show.legend = FALSE) +
     geom_point(aes(colour = cluster), size=2) +
     stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
     #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
@@ -79,7 +79,7 @@ plotMDS <- function(d, dend, color.vector=mycolors, dim1, dim2, title="MDS"){
           panel.grid.minor = element_blank(),
           axis.ticks = element_blank(),
           axis.text = element_blank()
-          )
+    )
   
   return(gMDS1)
   
@@ -128,15 +128,20 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
   #Add one event if drug used in that month
   for(med in names(medgroups)){
     medIDs = which(pat[,"medication"]==med)
-    clusterEvents = pat[medIDs,]
-    clusterEvents = rightCensoringMonths(clusterEvents, years)
-    
-    for(i in 1:dim(clusterEvents)[1]){
-      x = clusterEvents[i,"medication"]
-      start = clusterEvents[i,"start"]
-      end = clusterEvents[i,"end"]
+    if(length(medIDs)>0){
+      clusterEvents = pat[medIDs,]
+      clusterEvents = rightCensoringMonths(clusterEvents, years)
       
-      drug[x, start:end] = drug[x, start:end] + 1
+      if(dim(clusterEvents)[1]>0){
+        
+        for(i in 1:dim(clusterEvents)[1]){
+          x = clusterEvents[i,"medication"]
+          start = clusterEvents[i,"start"]
+          end = clusterEvents[i,"end"]
+          
+          drug[x, start:end] = drug[x, start:end] + 1
+        }
+      }
     }
   }
   
@@ -149,8 +154,8 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
   colnames(melted_drug) = c("med", "month", "value")
   melted_drug[which(melted_drug$value>1), "value"]=1 #avoiding duplicates
   
-  #Remove all 0 values
-  melted_drug = melted_drug[-which(melted_drug$value == 0),]
+  #Set all 0 values to -1
+  melted_drug[which(melted_drug$value == 0),"value"] = -1
   
   # d <- data.frame(x=rep(1:20, 5), y=rnorm(100, 5, .2) + rep(1:5, each=20), z=rep(1:20, 5), grp=factor(rep(1:5, each=20)))
   # 
@@ -160,8 +165,8 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
   
   #Plot heatmap
   gPaths <- ggplot(melted_drug, aes(x=month, y=value)) +
-    geom_path(aes(color = med), size=5, lineend = "round") +
-    geom_area(aes(fill = med), color=NA, alpha=0.3) +
+    geom_path(aes(color = med, group=1), size=5, lineend = "round") +
+    geom_area(aes(fill = med, group=1), color=NA, alpha=0.3) +
     #geom_smooth(method="loess", color="gray30", se=FALSE, size=1.2, linetype = "dashed") +
     #Group by medication
     facet_wrap(.~med, ncol=1, scales="free_y") +
@@ -170,7 +175,7 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
                        breaks = c(0,0.5,1),
                        labels = rev(c("all patients", "some", "none"))) +
     scale_x_continuous(limits=c(0,years*12),
-      breaks=c(seq(0, years, 1)*12),
+                       breaks=c(seq(0, years, 1)*12),
                        labels=c(paste("year", seq(0,years, 1))))+
     #custom colours
     scale_color_manual(values=medcolors) +
@@ -203,7 +208,7 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
 }
 
 
-plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
+plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications, years){
   #Get the events for patients in a cluster
   patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
   eveIDs = which(events[,"id"] %in% patIDs)
@@ -213,6 +218,7 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
   #Convert all days into months
   pat$start = round(pat$start/daysPerMonth)
   pat$end = round(pat$end/daysPerMonth)
+  pat = rightCensoringMonths(pat, years)
   
   #Create an empty matrix
   interactions = vector()
@@ -226,8 +232,8 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
       value = 0
       
       for(p in patients){
-        indRow = which((events$id %in% p) & (events$medication %in% medsRow))
-        indCol = which((events$id %in% p) & (events$medication %in% medsCol))
+        indRow = which((pat$id %in% p) & (pat$medication %in% medsRow))
+        indCol = which((pat$id %in% p) & (pat$medication %in% medsCol))
         if(length(indRow)>0 & length(indCol)>0){
           value = value + 1
         }
@@ -241,7 +247,7 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
   colnames(interactions) = c("A", "B", "value")
   interactions = as.data.frame(interactions, stringsAsFactors = TRUE)
   interactions$value <- as.numeric(as.character(interactions$value))
-
+  
   
   
   # interactions = as.data.frame(matrix("",length(medications),length(medications)), 
@@ -266,15 +272,15 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications){
   #     interactions[row,col]=round(pats/length(patients), digits=1)
   #   }
   # }
-
+  
   
   medlabs= c("penicillin"="pe.",
-               "cephalosporin" = "ce.",
-               "macrolide" = "ma.",
-               "nsaid" = "ns.",
-               "hydrocortisone" = "hc.",
-               "antibody" = "ab.",
-               "dmard" = "dm.")
+             "cephalosporin" = "ce.",
+             "macrolide" = "ma.",
+             "nsaid" = "ns.",
+             "hydrocortisone" = "hc.",
+             "antibody" = "ab.",
+             "dmard" = "dm.")
   
   
   #Plot heatmap

@@ -40,8 +40,9 @@ rightCensoringMonths <- function(data, year){
   
   #Right censoring of months
   indexes = which(dataC$end>months)
+  if(length(indexes)>0){
   dataC[indexes, "end"] = months
-  
+  }
   return(dataC)
 }
 

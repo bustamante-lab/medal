@@ -17,7 +17,7 @@ library(ggrepel)
 library(factoextra)
 library(NbClust)
 #library(cluster)
-#library(aricode)
+library(aricode)
 #library(tsne)
 
 #source("medal-functions.R")
@@ -149,7 +149,7 @@ ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 2000, 
 #Colors to be used
 color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
 color.vector2 = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
-#mycolors = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
+#color.vector3 = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
 
 #Plot Clustering strategies
 
@@ -187,7 +187,7 @@ ggexport(gpanels, filename="../images/Figure2-dendro-mds.png", height = 4000, wi
 
 
 #Calculating Normalized Mutual Information
-#NMI(k2$cluster, hclust.assignment, variant="sum")
+NMI(kmeans$cluster, cutree(dend,k), variant="sum")
 #https://course.ccs.neu.edu/cs6140sp15/7_locality_cluster/Assignment-6/NMI.pdf
 
 

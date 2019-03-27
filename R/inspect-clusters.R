@@ -94,21 +94,22 @@ n = years*12 #7 years
 m = length(names(medgroups))
 
 #Removing patient 37 from the analysis
-clusters = clusters[-4]
-profiles[which(profiles[,"cluster"] == 3), "cluster"] = 5
-profiles[which(profiles[,"cluster"] == 4), "cluster"] = 3
+#clusters = clusters[-4]
+#profiles[which(profiles[,"cluster"] == 3), "cluster"] = 5
+#profiles[which(profiles[,"cluster"] == 4), "cluster"] = 3
 
 
 #Get all paths
 gPath1 <- plotTimeSeriesDrug(1, events, profiles, medcolors, medgroups, years)
 gPath2 <- plotTimeSeriesDrug(2, events, profiles, medcolors, medgroups, years)
 gPath3 <- plotTimeSeriesDrug(3, events, profiles, medcolors, medgroups, years)
+gPath4 <- plotTimeSeriesDrug(4, events, profiles, medcolors, medgroups, years)
 
 
 #Save plot
-gpanels <- ggarrange(gPath1, gPath2, #gPath3, 
-                     labels = c("", "", ""),
-                     ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
+gpanels <- ggarrange(gPath1, gPath3, gPath2, gPath4,
+                     labels = c("A", "B", "C", "D"),
+                     ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
 ggexport(gpanels, filename="../images/Figure3-clusters.png", height = 4000, width = 5000, res=300)
 
   
@@ -119,15 +120,16 @@ ggexport(gpanels, filename="../images/Figure3-clusters.png", height = 4000, widt
 #--------------------------------------------------
 
 #Get all triangles
-gTri1 <- plotCoOcurrenceTriangle(1, events, profiles, names(medgroups))
-gTri2 <- plotCoOcurrenceTriangle(2, events, profiles, names(medgroups))
-gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups))
+gTri1 <- plotCoOcurrenceTriangle(1, events, profiles, names(medgroups), years)
+gTri2 <- plotCoOcurrenceTriangle(2, events, profiles, names(medgroups), years)
+gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups), years)
+gTri4 <- plotCoOcurrenceTriangle(4, events, profiles, names(medgroups), years)
 
 #Save plot
-gpanels <- ggarrange(gTri1, gTri2, gTri3, 
-                     labels = c("", "", ""),
-                     ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, width = 5000, res=300)
+gpanels <- ggarrange(gTri1, gTri3, gTri2, gTri4,
+                     labels = c("A", "B", "C", "D"),
+                     ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
+ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, width = 6000, res=300)
 
 
 
@@ -136,15 +138,15 @@ ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, wid
 #--------------------------------------------------
 
 
-  #Get all impairment scores
-  gGIS1 <- plotScores(1, outcomes, profiles)
-  gGIS2 <- plotScores(2, outcomes, profiles)
-  gGIS3 <- plotScores(3, outcomes, profiles)
-  
-  
-  #Save plot
-  gpanels <- ggarrange(gGIS1, gGIS2, gGIS3, 
-                       labels = c("", "", ""),
-                       ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
-  ggexport(gpanels, filename="../images/Figure3-scores.png", height = 2000, width = 5000, res=300)
-  
+  # #Get all impairment scores
+  # gGIS1 <- plotScores(1, outcomes, profiles)
+  # gGIS2 <- plotScores(2, outcomes, profiles)
+  # gGIS3 <- plotScores(3, outcomes, profiles)
+  # 
+  # 
+  # #Save plot
+  # gpanels <- ggarrange(gGIS1, gGIS2, gGIS3, 
+  #                      labels = c("", "", ""),
+  #                      ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
+  # ggexport(gpanels, filename="../images/Figure3-scores.png", height = 2000, width = 5000, res=300)
+  # 
