@@ -5,7 +5,7 @@ Medication Alignment Algorithm
 ## Citation
 For citation and more information refer to:
 
->A. Lopez Pineda et al. (2019) "Medal: a similarity metric in the longitudinal care of patients with polypharmacy treatment" (in preparation)
+>A. Lopez Pineda et al. (2019) "Medal: aligning treatment to measure patient similarity in the longitudinal care" (in preparation)
 
 
 ## Dependencies
