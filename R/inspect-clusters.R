@@ -119,17 +119,17 @@ ggexport(gpanels, filename="../images/Figure3-clusters.png", height = 4000, widt
 # Step 4. Plot co-occurence triangles 
 #--------------------------------------------------
 
-#Get all triangles
-gTri1 <- plotCoOcurrenceTriangle(1, events, profiles, names(medgroups), years)
-gTri2 <- plotCoOcurrenceTriangle(2, events, profiles, names(medgroups), years)
-gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups), years)
-gTri4 <- plotCoOcurrenceTriangle(4, events, profiles, names(medgroups), years)
-
-#Save plot
-gpanels <- ggarrange(gTri1, gTri3, gTri2, gTri4,
-                     labels = c("A", "B", "C", "D"),
-                     ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, width = 6000, res=300)
+# #Get all triangles
+# gTri1 <- plotCoOcurrenceTriangle(1, events, profiles, names(medgroups), years)
+# gTri2 <- plotCoOcurrenceTriangle(2, events, profiles, names(medgroups), years)
+# gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups), years)
+# gTri4 <- plotCoOcurrenceTriangle(4, events, profiles, names(medgroups), years)
+# 
+# #Save plot
+# gpanels <- ggarrange(gTri1, gTri3, gTri2, gTri4,
+#                      labels = c("A", "B", "C", "D"),
+#                      ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
+# ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, width = 6000, res=300)
 
 
 
@@ -138,15 +138,18 @@ ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, wid
 #--------------------------------------------------
 
 
-  # #Get all impairment scores
-  # gGIS1 <- plotScores(1, outcomes, profiles)
-  # gGIS2 <- plotScores(2, outcomes, profiles)
-  # gGIS3 <- plotScores(3, outcomes, profiles)
-  # 
-  # 
+  #Get all impairment scores
+   gGIS1 <- plotScores(1, outcomes, profiles, 2)
+   gGIS2 <- plotScores(2, outcomes, profiles, 21)
+   gGIS3 <- plotScores(3, outcomes, profiles, 21)
+   gGIS4 <- plotScores(4, outcomes, profiles, 21)
+   
+   
   # #Save plot
-  # gpanels <- ggarrange(gGIS1, gGIS2, gGIS3, 
-  #                      labels = c("", "", ""),
-  #                      ncol = 3, nrow = 1, legend="none", common.legend = FALSE)
-  # ggexport(gpanels, filename="../images/Figure3-scores.png", height = 2000, width = 5000, res=300)
-  # 
+   gpanels <- ggarrange(gGIS1, gGIS3, gGIS2, gGIS4,
+                        labels = c("A", "B", "C", "D"),
+                        ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
+   ggexport(gpanels, filename="../images/Figure3-scores.png", height = 1500, width = 5000, res=300)
+  
+   
+    

@@ -178,8 +178,8 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
                        breaks=c(seq(0, years, 1)*12),
                        labels=c(paste("year", seq(0,years, 1))))+
     #custom colours
-    scale_color_manual(values=medcolors) +
-    scale_fill_manual(values=medcolors) +
+    scale_color_manual(name="Medications", values=medcolors) +
+    scale_fill_manual(name="Medications", values=medcolors) +
     #Add labels
     labs(title=paste("Medication usage in cluster", cluster), x="Years of follow-up") +
     #set base size for all font elements
@@ -317,7 +317,8 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications, year
 }
 
 
-plotScores <- function(cluster, outcomes, profiles, maxDay){
+plotScores <- function(cluster, outcomes, profiles, years){
+  maxDay = years*365
   
   #Get the scores for patients in a cluster
   patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
