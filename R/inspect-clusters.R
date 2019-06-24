@@ -136,20 +136,21 @@ ggexport(gpanels, filename="../images/Figure3-clusters.png", height = 4000, widt
 #--------------------------------------------------
 # Step 5. Plot the impairment scores
 #--------------------------------------------------
+color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
 
 
   #Get all impairment scores
-   gGIS1 <- plotScores(1, outcomes, profiles, 2)
-   gGIS2 <- plotScores(2, outcomes, profiles, 21)
-   gGIS3 <- plotScores(3, outcomes, profiles, 21)
-   gGIS4 <- plotScores(4, outcomes, profiles, 21)
+   gGIS1 <- plotScores(1, outcomes, profiles, 2, color.vector[1])
+   gGIS2 <- plotScores(2, outcomes, profiles, 2, color.vector[2])
+   gGIS3 <- plotScores(3, outcomes, profiles, 2, color.vector[3])
+   gGIS4 <- plotScores(4, outcomes, profiles, 2, color.vector[4])
    
    
   # #Save plot
    gpanels <- ggarrange(gGIS1, gGIS3, gGIS2, gGIS4,
                         labels = c("A", "B", "C", "D"),
                         ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
-   ggexport(gpanels, filename="../images/Figure3-scores.png", height = 1500, width = 5000, res=300)
+   ggexport(gpanels, filename="../images/Figure4-scores.png", height = 1500, width = 5000, res=300)
   
    
     

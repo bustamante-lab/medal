@@ -111,6 +111,7 @@ plotTSNE <- function(score, color.vector, title="MDS"){
 
 
 plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, medgroups, years){
+  
   #Get the events for patients in a cluster
   patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
   eveIDs = which(events[,"id"] %in% patIDs)
@@ -317,7 +318,7 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications, year
 }
 
 
-plotScores <- function(cluster, outcomes, profiles, years){
+plotScores <- function(cluster, outcomes, profiles, years, mycolor="gray50"){
   maxDay = years*365
   
   #Get the scores for patients in a cluster
@@ -328,18 +329,33 @@ plotScores <- function(cluster, outcomes, profiles, years){
   
   pat$id <- as.character(pat$id)
   
+  
+  #Normalize all scores to being at the same day (onset)
+  for(i in 1:dim(pat)[1]){
+    
+    onset = ceiling(profiles[which(profiles$id==pat[i, "id"]), "age_onset"]*365)
+    pat[i, "daysSinceOnset"] = pat[i, "daysSinceBirth"] - onset
+    
+  }
+  
+  
   #Plot heatmap
   gScore <- 
-    ggplot(data = pat, aes(x = daysSinceBirth,  y = gi_new)) +
+    ggplot(data = pat, aes(x = daysSinceOnset,  y = gi_new)) +
     #geom_point(aes(group=id, color=id), size=1)+
-    geom_line(aes(group=id, color=id), size=0.5, linetype="dashed")+
-    geom_smooth(aes(group=id, color=id), method = "loess", size=1, se=FALSE) +
+    #geom_line(aes(group=id, color=id), size=0.5, linetype="dashed")+
+    #geom_smooth(aes(group=id), color=mycolor, method = "lm", size=1, se=FALSE) +
+    geom_line(aes(group=id), stat="smooth", method = "lm",
+              color = mycolor, size = 1, linetype ="solid", alpha = 0.4) +
     geom_smooth(method = "loess", size=2, se=FALSE, color="gray50") +
     scale_y_continuous(limits = c(0, 100), expand=c(0,0)) +
     scale_x_continuous(limits = c(0, maxDay) , 
                        breaks=seq(0,(maxDay+365),365),
                        labels=paste("year", seq(0,(maxDay+365),365)/365),
                        expand = c(0, 0)) +
+    labs(title=paste("Cluster", cluster, sep=" "),
+      y="Global Impairment Score", 
+      x="Time since onset") +
     theme(#Add a title
       plot.title = element_text(hjust = 0.5, size=15),
       #Remove elements
@@ -347,9 +363,9 @@ plotScores <- function(cluster, outcomes, profiles, years){
       legend.position="none", 
       legend.title = element_blank(),
       axis.title.x=element_blank(),
-      axis.text.x=element_blank(),
-      axis.ticks.x=element_blank(),
-      #axis.text.x=element_text(angle=90, vjust=0.5),
+      #axis.text.x=element_blank(),
+      #axis.ticks.x=element_blank(),
+      axis.text.x=element_text(angle=90, vjust=0.5),
       #axis.title.y=element_blank(),
       #axis.ticks.y=element_blank(),
       panel.grid.major = element_blank(),
