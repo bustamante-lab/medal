@@ -152,5 +152,80 @@ color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
                         ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
    ggexport(gpanels, filename="../images/Figure4-scores.png", height = 1500, width = 5000, res=300)
   
+
+#--------------------------------------------------
+# Step 6. Plot demographics
+#--------------------------------------------------
+
+   gAgeBox <- plotAgeBox(profiles, color.vector)
+   gSex <- plotPercentage(profiles, 
+                          var="is_male", 
+                          var.label = "Sex",
+                          var.coding = c("0"="Female", "1"="Male"),
+                          color.vector=color.vector)
+   gEthnic <- plotPercentage(profiles, 
+                          var="NHW", 
+                          var.label = "Ethic group",
+                          var.coding = c("0"="Other", "1"="White (non Hisp)"),
+                          xlim=c(0,1.2),
+                          color.vector=color.vector)
+   gOCD <- plotPercentage(profiles, 
+                             var="OCD", 
+                             var.label = "Obsesive Compulsive Disorder",
+                             var.coding = c("0"="No", "1"="Yes"),
+                             xlim=c(0,1.1),
+                             color.vector=color.vector)
+   gFood <- plotPercentage(profiles, 
+                          var="foodprob", 
+                          var.label = "Food problems",
+                          var.coding = c("0"="No", "1"="Yes"),
+                          color.vector=color.vector)
+   gAnx <- plotPercentage(profiles, 
+                           var="anx", 
+                           var.label = "Anxiety",
+                           var.coding = c("0"="No", "1"="Yes"),
+                           color.vector=color.vector)
+   gEmotional <- plotPercentage(profiles, 
+                          var="emotional", 
+                          var.label = "Emotional",
+                          var.coding = c("0"="No", "1"="Yes"),
+                          color.vector=color.vector)
+   gMood <- plotPercentage(profiles, 
+                                var="mood", 
+                                var.label = "Mood",
+                                var.coding = c("0"="No", "1"="Yes"),
+                                color.vector=color.vector)
+   gAgg <- plotPercentage(profiles, 
+                           var="agg", 
+                           var.label = "Agg",
+                           var.coding = c("0"="No", "1"="Yes"),
+                           color.vector=color.vector)
+   gSch <- plotPercentage(profiles, 
+                          var="sch", 
+                          var.label = "School problems",
+                          var.coding = c("0"="No", "1"="Yes"),
+                          color.vector=color.vector)
+   gReg <- plotPercentage(profiles, 
+                             var="reg", 
+                             var.label = "Regression",
+                             var.coding = c("0"="No", "1"="Yes"),
+                             color.vector=color.vector)
+   gSleep <- plotPercentage(profiles, 
+                          var="sleep", 
+                          var.label = "Sleep disorders",
+                          var.coding = c("0"="No", "1"="Yes"),
+                          color.vector=color.vector)
+   gTics <- plotPercentage(profiles, 
+                            var="tics", 
+                            var.label = "Tics",
+                            var.coding = c("0"="No", "1"="Yes"),
+                            color.vector=color.vector)
    
-    
+   
+   gpanels <- ggarrange(gAgeBox, gSex, gEthnic, gOCD, gFood, gAnx, 
+                        gEmotional, gMood, gAgg, gSch, gReg, gSleep, gTics,
+                        ncol = 3, nrow = 5, legend="none", common.legend = FALSE)
+   ggexport(gpanels, filename="../images/Figure5-profiles.png", height = 4000, width = 5000, res=300)
+   
+   
+   

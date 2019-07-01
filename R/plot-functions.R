@@ -12,6 +12,9 @@ library(reshape2)
 library(scales)
 library(dendextend)
 library(MASS)
+library("dplyr")
+library("colorspace")
+library("tidyr")
 
 
 
@@ -563,6 +566,67 @@ averagePatients <- function(patient1, patient2){
   
   
   return(patientU)
+}
+
+
+plotAgeBox <- function(profiles, color.vector){
+  
+  gAgeBox <- ggplot(profiles) +
+    geom_boxplot(aes(x=as.character(cluster), y=age_onset, fill=as.character(cluster)), 
+                 alpha=0.8, color="gray50", outlier.shape = 1, show.legend = FALSE) +
+    geom_hline(aes(yintercept = 7.5, linetype="dashed"), color = "palevioletred", size=1.5) +
+    scale_fill_manual(values=color.vector) +
+    scale_y_continuous(limits=c(2,13), breaks=seq(2,13,1)) +
+    scale_linetype_manual(name="", values="dashed", labels="cohort mean") +
+    labs(title="Age", x="Cluster assignment", y="Age of onset") +
+    coord_flip() +
+    theme_light() +
+    theme(
+      legend.position=c(0.12, 0.1),
+      axis.title = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+  
+  return(gAgeBox)
+  
+}
+
+
+plotPercentage <- function(profiles, var, var.label=var, var.coding, color.vector, xlim=c(0,1)){
+  
+  profs <- profiles %>%
+    mutate(var = recode(get(var), !!!var.coding)) %>%
+    group_by(cluster, var) %>%
+    summarise (n = n()) %>%
+    mutate(freq = n / sum(n)) %>%
+    ungroup %>%
+    complete(cluster, var, fill = list(freq = 0))
+
+  
+  newcolors= c(rbind(darken(color.vector, 0.3), lighten(color.vector, 0.3)))
+  names(newcolors) = interaction(as.character(profs$cluster), profs$var)
+  
+  gVar <- 
+    ggplot(profs, aes(x=as.character(cluster), y=freq)) +
+    geom_bar(aes(fill=interaction(as.character(cluster), var)),
+             stat="identity", position="dodge2", width = 0.8, color="gray50", alpha=0.8) +
+    geom_text(aes(label=scales::percent(freq, accuracy = 5L)),
+              position=position_dodge2(width = 0.8), vjust=-0.3) +
+    geom_text(aes(label=var), 
+              position=position_dodge2(width = 0.8), vjust=-1.8) +
+    scale_fill_manual(name="cluster", values=newcolors) +
+    scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits=xlim, breaks=seq(0,1,0.25)) +
+    labs(title=var.label, x="Cluster assignment", y="Percentage") +
+    theme_light() +
+    theme(
+      legend.position="none",
+      axis.title = element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank())
+  
+  return(gVar)
+  
 }
 
 
