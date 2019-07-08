@@ -21,6 +21,7 @@ library(NbClust)
 #library(cluster)
 library(aricode)
 #library(tsne)
+library(NMF) #for cluster purity and entropy
 
 #Additional functions
 #source("medal-functions.R")
@@ -121,13 +122,16 @@ k=4
 # Elbow method
 elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
   geom_vline(xintercept = k, linetype = "dashed", color="#5581B0", size=0.6) +
-  labs(title = "Elbow method")
+  labs(title = "Elbow method",
+       y="Total within-clusters sum of squares")
 
 # Silhouette method
 silhouette <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette", 
-                           print.summary = FALSE) +
-  geom_vline(xintercept = k, linetype = "dotted", color="firebrick1", size=1.5) +
+                           print.summary = FALSE, barcolor = "white") +
+  geom_vline(xintercept = k, linetype = "dashed", color="#5581B0", size=0.6) +
   labs(title = "Silhouette method")
+
+
 # Gap statistic
 # nboot = 50 to keep the function speedy. 
 # recommended value: nboot= 500 for your analysis.
@@ -136,14 +140,14 @@ set.seed(123)
 gapStat <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
                         method = "gap_stat", nboot = 50, print.summary = FALSE,
                         maxSE=list(method="Tibs2001SEmax", SE.factor=1)) +
-  #geom_vline(xintercept = k, linetype = "dotted", color="firebrick1", size=1.5) +
+  #geom_vline(xintercept = 8, linetype = "dashed", color="#5581B0", size=0.6) +
   labs(title = "Gap statistic method")
 
-gpanels <- ggarrange(elbow, gapStat,
-                     labels = c("A", "B"),
-                     ncol = 2, nrow = 1, legend="bottom", 
+gpanels <- ggarrange(elbow, silhouette, gapStat,
+                     labels = c("A", "B", "C"),
+                     ncol = 3, nrow = 1, legend="bottom", 
                      align="v", common.legend = FALSE)
-ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 2000, width = 4000, res=300)
+ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 1200, width = 4000, res=300)
 
 
 
@@ -188,10 +192,25 @@ ggexport(gpanels, filename="../images/Figure2-dendro-mds.png", height = 4000, wi
 
 #--------------------------------------------------
 
+recoded = kmeans$cluster
+recoded[which(recoded == 3)] = 1
+recoded[which(recoded == 4)] = 2
+
 
 #Calculating Normalized Mutual Information
-NMI(kmeans$cluster, cutree(dend,k), variant="sum")
+NMI(recoded, cutree(dend,2), variant="sum")
+NMI(kmeans$cluster, cutree(dend,4), variant="sum")
 #https://course.ccs.neu.edu/cs6140sp15/7_locality_cluster/Assignment-6/NMI.pdf
+
+#Calculating Cluster purity
+purity(recoded, cutree(dend,2))
+purity(kmeans$cluster, cutree(dend,4))
+#https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
+
+#Calculating Cluster entropy
+entropy(recoded, cutree(dend,2))
+entropy(kmeans$cluster, cutree(dend,4))
+#https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
 
 
 #Saving the cluster to profiles
