@@ -321,7 +321,9 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications, year
 }
 
 
-plotScores <- function(cluster, outcomes, profiles, years, mycolor="gray50"){
+plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
+                       profiles, years, mycolor="gray50", label="Score",
+                       title=TRUE, xlabel=TRUE){
   maxDay = years*365
   
   #Get the scores for patients in a cluster
@@ -344,20 +346,21 @@ plotScores <- function(cluster, outcomes, profiles, years, mycolor="gray50"){
   
   #Plot heatmap
   gScore <- 
-    ggplot(data = pat, aes(x = daysSinceOnset,  y = gi_new)) +
+    ggplot(data = pat, aes(x = daysSinceOnset,  y = get(score))) +
     #geom_point(aes(group=id, color=id), size=1)+
     #geom_line(aes(group=id, color=id), size=0.5, linetype="dashed")+
     #geom_smooth(aes(group=id), color=mycolor, method = "lm", size=1, se=FALSE) +
     geom_line(aes(group=id), stat="smooth", method = "lm",
               color = mycolor, size = 1, linetype ="solid", alpha = 0.4) +
     geom_smooth(method = "loess", size=2, se=FALSE, color="gray50") +
-    scale_y_continuous(limits = c(0, 100), expand=c(0,0)) +
+    scale_y_continuous(limits = c(ylims[1], ylims[2]), 
+                       breaks=seq(0, ylims[2], (ylims[2]-ylims[1])/ylims[3]), 
+                       expand=c(0,0)) +
     scale_x_continuous(limits = c(0, maxDay) , 
                        breaks=seq(0,(maxDay+365),365),
                        labels=paste("year", seq(0,(maxDay+365),365)/365),
                        expand = c(0, 0)) +
-    labs(title=paste("Cluster", cluster, sep=" "),
-      y="Global Impairment Score", 
+    labs(y=label, 
       x="Time since onset") +
     theme(#Add a title
       plot.title = element_text(hjust = 0.5, size=15),
@@ -379,6 +382,16 @@ plotScores <- function(cluster, outcomes, profiles, years, mycolor="gray50"){
       #Add a border
       panel.border = element_rect(colour = "black", fill=NA, size=1)
     )
+  
+  if(title==TRUE){
+    gScore = gScore +
+      ggtitle(paste("Cluster", cluster, sep=" "))
+  }
+  if(xlabel==FALSE){
+    gScore = gScore +
+      theme(axis.text.x = element_blank(),
+            axis.ticks.x=element_blank())
+  }
   
   return(gScore)
 }
