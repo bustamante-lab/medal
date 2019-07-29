@@ -78,7 +78,8 @@ medgroups$penicillin = c("penicillin v", "penicillin g", "amoxicillin", "augment
 medgroups$cephalosporin = c("cephalexin", "cefadroxil")
 medgroups$macrolide = c("azithromycin")
 medgroups$nsaid = c("ibuprofen", "naproxen", "indomethacin", "sulindac", "aspirin")
-medgroups$hydrocortisone = c("prednisone", "maintenance prednisone", "decadron", "solumedrol")
+medgroups$corticosteroid.oral = c("prednisone", "maintenance prednisone", "decadron")
+medgroups$corticosteroid.iv = c("solumedrol")
 medgroups$antibody = c("rituximab", "ivig")
 medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
 
@@ -128,7 +129,8 @@ elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
 # Silhouette method
 silhouette <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette", 
                            print.summary = FALSE, barcolor = "white") +
-  geom_vline(xintercept = k, linetype = "dashed", color="#5581B0", size=0.6) +
+  geom_vline(xintercept = 2, linetype = "dashed", color="#5581B0", size=0.6) +
+  geom_vline(xintercept = 4, linetype = "dashed", color="#5581B0", size=0.6) +
   labs(title = "Silhouette method")
 
 
@@ -140,7 +142,6 @@ set.seed(123)
 gapStat <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
                         method = "gap_stat", nboot = 50, print.summary = FALSE,
                         maxSE=list(method="Tibs2001SEmax", SE.factor=1)) +
-  #geom_vline(xintercept = 8, linetype = "dashed", color="#5581B0", size=0.6) +
   labs(title = "Gap statistic method")
 
 gpanels <- ggarrange(elbow, silhouette, gapStat,
@@ -172,7 +173,7 @@ kmeans = getKMeansClusteringPCA(d, k)
 
 # tsne1 = getHierarchicalClusteringTSNE(d, k)
 # gTSNEclus <- plotTSNE(tsne1, color.vector, "TSNE (hierarchical clustering)")
-# 
+ 
 # tsne2 = getKMeansClusteringTSNE(d, k)
 # gTSNEkmeans <- plotTSNE(tsne2, color.vector, "TSNE (k-means)")
 
@@ -198,18 +199,18 @@ recoded[which(recoded == 4)] = 2
 
 
 #Calculating Normalized Mutual Information
-NMI(recoded, cutree(dend,2), variant="sum")
-NMI(kmeans$cluster, cutree(dend,4), variant="sum")
+round(NMI(recoded, cutree(dend,2), variant="sum"), digits=2)
+round(NMI(kmeans$cluster, cutree(dend,4), variant="sum"), digits=2)
 #https://course.ccs.neu.edu/cs6140sp15/7_locality_cluster/Assignment-6/NMI.pdf
 
 #Calculating Cluster purity
-purity(recoded, cutree(dend,2))
-purity(kmeans$cluster, cutree(dend,4))
+round(purity(recoded, cutree(dend,2)), digits=2)
+round(purity(kmeans$cluster, cutree(dend,4)), digits=2)
 #https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
 
 #Calculating Cluster entropy
-entropy(recoded, cutree(dend,2))
-entropy(kmeans$cluster, cutree(dend,4))
+round(entropy(recoded, cutree(dend,2)), digits=2)
+round(entropy(kmeans$cluster, cutree(dend,4)), digits=2)
 #https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
 
 

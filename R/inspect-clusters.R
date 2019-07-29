@@ -70,7 +70,8 @@ medgroups$penicillin = c("penicillin v", "penicillin g", "amoxicillin", "augment
 medgroups$cephalosporin = c("cephalexin", "cefadroxil")
 medgroups$macrolide = c("azithromycin")
 medgroups$nsaid = c("ibuprofen", "naproxen", "indomethacin", "sulindac", "aspirin")
-medgroups$hydrocortisone = c("prednisone", "maintenance prednisone", "decadron", "solumedrol")
+medgroups$corticosteroid.oral = c("prednisone", "maintenance prednisone", "decadron")
+medgroups$corticosteroid.iv = c("solumedrol")
 medgroups$antibody = c("rituximab", "ivig")
 medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
 
@@ -85,11 +86,10 @@ medcolors= c("penicillin"="#66c2a5",
              "cephalosporin" = "#fc8d62",
              "macrolide" = "#8da0cb",
              "nsaid" = "#e7298a",
-             "hydrocortisone" = "#a6d854",
-             "antibody" = "#ffd92f",
-             "dmard" = "#e5c494")
-
-
+             "corticosteroid.oral" = "#a6d854",
+             "corticosteroid.iv" = "#ffd92f",
+             "antibody" = "#e5c494",
+             "dmard" = "#b3b3b3")
 
 clusters = unique(sort(profiles$cluster))
 years = 2
@@ -209,7 +209,7 @@ color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
                         gAgg1, gAgg3, gAgg2, gAgg4,
                         gcis1, gcis3, gcis2, gcis4,
                         ncol = 4, nrow = 4, legend="none", common.legend = FALSE)
-   ggexport(gpanels, filename="../images/Figure4-other-scores1.png", height = 3000, width = 5000, res=300)
+   ggexport(gpanels, filename="../images/FigureB-other-scores1.png", height = 3000, width = 5000, res=300)
    
    
    gpanels <- ggarrange(garfi1, garfi3, garfi2, garfi4,
@@ -217,7 +217,7 @@ color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
                         gwpi1, gwpi3, gwpi2, gwpi4,
                         gsss1, gsss3, gsss2, gsss4,
                         ncol = 4, nrow = 4, legend="none", common.legend = FALSE)
-   ggexport(gpanels, filename="../images/Figure4-other-scores2.png", height = 3000, width = 5000, res=300)
+   ggexport(gpanels, filename="../images/FigureB-other-scores2.png", height = 3000, width = 5000, res=300)
    
    
 
@@ -293,7 +293,7 @@ color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
    gpanels <- ggarrange(gAgeBox, gSex, gEthnic, gOCD, gFood, gAnx, 
                         gEmotional, gMood, gAgg, gSch, gReg, gSleep, gTics,
                         ncol = 3, nrow = 5, legend="none", common.legend = FALSE)
-   ggexport(gpanels, filename="../images/Figure5-profiles.png", height = 4000, width = 5000, res=300)
+   ggexport(gpanels, filename="../images/FigureA-profiles.png", height = 4000, width = 5000, res=300)
    
    
    

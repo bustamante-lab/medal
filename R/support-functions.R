@@ -6,6 +6,7 @@
 #
 ###############################################################
 
+library(tsne)
 
 mycolors = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
 
@@ -166,7 +167,7 @@ getHierarchicalClusteringTSNE <- function(d, k){
     hclust(method="ward.D") %>% as.dendrogram 
   hclust.assignment = cutree(dend, k)
   
-  tsne1 = as.data.frame(tsne(d, k))
+  tsne1 = as.data.frame(tsne(d, k, perplexity=3))
   
   tsne1 = cbind(tsne1, cluster=as.character(hclust.assignment))
   

@@ -18,13 +18,14 @@ library("tidyr")
 
 
 
-mycolors <- c("penicillin"="#1b9e77",
-              "cephalosporin"="#d95f02",
-              "macrolide"="#7570b3",
-              "nsaid"="#e7298a",
-              "hydrocortisone"="#66a61e",
-              "antibody"="#e6ab02",
-              "dmard"="#a6761d")
+medcolors= c("penicillin"="#66c2a5",
+             "cephalosporin" = "#fc8d62",
+             "macrolide" = "#8da0cb",
+             "nsaid" = "#e7298a",
+             "corticosteroid.oral" = "#a6d854",
+             "corticosteroid.iv" = "#ffd92f",
+             "antibody" = "#e5c494",
+             "dmard" = "#b3b3b3")
 
 daysPerMonth = 30
 
@@ -182,8 +183,10 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
                        breaks=c(seq(0, years, 1)*12),
                        labels=c(paste("year", seq(0,years, 1))))+
     #custom colours
-    scale_color_manual(name="Medications", values=medcolors) +
-    scale_fill_manual(name="Medications", values=medcolors) +
+    scale_color_manual(name="Medications", values=medcolors,
+                      labels=str_replace(names(medcolors), "\\.", " ")) +
+    scale_fill_manual(name="Medications", values=medcolors,
+                      labels=str_replace(names(medcolors), "\\.", " ")) +
     #Add labels
     labs(title=paste("Medication usage in cluster", cluster), x="Years of follow-up") +
     #set base size for all font elements
