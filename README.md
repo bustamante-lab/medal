@@ -5,9 +5,8 @@ Medication Alignment Algorithm
 ## Citation
 For citation and more information refer to:
 
-> Medal: a patient similarity metric using medication prescribing patterns
-Arturo Lopez Pineda, Armin Pourshafeie, Alexander Ioannidis, Collin McCloskey Leibold, Avis Chan, Jennifer Frankovich, Carlos D. Bustamante, Genevieve L. Wojcik
-medRxiv 19004440; doi: https://doi.org/10.1101/19004440
+>A. Lopez Pineda et al. (2019) "Medal: a patient similarity metric using medication
+prescribing patterns." doi: https://doi.org/10.1101/19004440
 
 
 ## Dependencies
