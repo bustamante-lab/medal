@@ -3,6 +3,7 @@
 ## Project: Medication Alignment Algorithm (Medal)             ##  
 ## Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)  ##
 ## Date: Feb 27, 2019                                          ##
+## Updated: Mar 26, 2020                                       ##
 ##                                                             ##
 #################################################################
 
@@ -35,7 +36,7 @@ source("plot-functions.R")
 
 #---
 #File with patient ID (de-ID), comorbidities, initial clinical presentation, etc.
-profiles = read.csv("../../clinical/data-matrix-profiles.csv", stringsAsFactors = FALSE)
+profiles = read.csv("../../data/patients.csv", stringsAsFactors = FALSE)
 
 #Variables for stratification
 strats <- c("is_male", "NHW", "OCD", "foodprob", "anx", 
@@ -49,7 +50,7 @@ patients = sort(unique(profiles$id))
 
 #---
 #File with events
-events = read.csv("../../medication/meddrug-12-2018.csv", stringsAsFactors = FALSE)
+events = read.csv("../../data/medications.csv", stringsAsFactors = FALSE)
 
 #Only select rows for the same patients listed in Profiles
 rows = which(events$id %in% patients)
@@ -59,7 +60,7 @@ events = events[rows,c("id", "medication", "start", "end")]
 
 #---
 #File with clinical evaluations (outcomes)
-outcomes = read.csv("../../clinical/data-matrix-outcomes.csv", stringsAsFactors = FALSE)
+outcomes = read.csv("../../data/outcomes.csv", stringsAsFactors = FALSE)
 
 #Only select rows for the same patients listed in Profiles
 rows = which(outcomes$id %in% patients)
