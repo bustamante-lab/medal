@@ -6,7 +6,8 @@
 #
 ###############################################################
 
-library(tsne)
+#library(tsne)
+library(Rtsne)
 
 mycolors = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
 
@@ -148,28 +149,33 @@ getKMeansClusteringPCA <- function(d, k){
   return(scores)
 }
 
-getKMeansClusteringTSNE <- function(d, k){
+getKMeansClusteringTSNE <- function(d, k, perplexity=k){
   
   #K-means clustering
   k2 <- kmeans(d, centers = k, nstart = 25)
   
   # TSNE
-  tsne1 = as.data.frame(tsne(d, k))
+  #tsne1 = as.data.frame(tsne(d, k, perplexity))
+  tsne1 = as.data.frame(Rtsne(d, perplexity=4, is_distance=TRUE)$Y)
   
   tsne1 = cbind(tsne1, cluster=as.character(k2$cluster))
+  rownames(tsne1) <- rownames(d)
   
   return(tsne1)
 }
 
-getHierarchicalClusteringTSNE <- function(d, k){
+getHierarchicalClusteringTSNE <- function(d, k, perplexity=k){
   # Create Dendrogram
   dend <- d %>% as.dist %>%
     hclust(method="ward.D") %>% as.dendrogram 
   hclust.assignment = cutree(dend, k)
   
-  tsne1 = as.data.frame(tsne(d, k, perplexity=3))
+  #TSNE
+  #tsne1 = as.data.frame(tsne(d, k, perplexity))
+  tsne1 = as.data.frame(Rtsne(d, perplexity=4, is_distance=TRUE)$Y)
   
   tsne1 = cbind(tsne1, cluster=as.character(hclust.assignment))
+  rownames(tsne1) <- rownames(d)
   
   return(tsne1)
 }

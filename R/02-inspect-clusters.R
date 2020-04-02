@@ -22,7 +22,7 @@ source("plot-functions.R")
 
 #---
 #File with patient ID (de-ID), comorbidities, initial clinical presentation, etc.
-profiles = read.csv("../../clinical/data-matrix-profiles-cluster.csv", stringsAsFactors = FALSE)
+profiles = read.csv("../../data/data-matrix-profiles-cluster.csv", stringsAsFactors = FALSE)
 
 #Variables for stratification
 strats <- c("is_male", "NHW", "OCD", "foodprob", "anx", 
@@ -36,7 +36,7 @@ patients = sort(unique(profiles$id))
 
 #---
 #File with events
-events = read.csv("../../medication/meddrug-12-2018.csv", stringsAsFactors = FALSE)
+events = read.csv("../../data/medications.csv", stringsAsFactors = FALSE)
 
 #Only select rows for the same patients listed in Profiles
 rows = which(events$id %in% patients)
@@ -46,7 +46,7 @@ events = events[rows,c("id", "medication", "start", "end")]
 
 #---
 #File with clinical evaluations (outcomes)
-outcomes = read.csv("../../clinical/data-matrix-outcomes.csv", stringsAsFactors = FALSE)
+outcomes = read.csv("../../data/outcomes.csv", stringsAsFactors = FALSE)
 
 #Only select rows for the same patients listed in Profiles
 rows = which(outcomes$id %in% patients)
@@ -72,8 +72,8 @@ medgroups$macrolide = c("azithromycin")
 medgroups$nsaid = c("ibuprofen", "naproxen", "indomethacin", "sulindac", "aspirin")
 medgroups$corticosteroid.oral = c("prednisone", "maintenance prednisone", "decadron")
 medgroups$corticosteroid.iv = c("solumedrol")
-medgroups$antibody = c("rituximab", "ivig")
-medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
+medgroups$immunoglobulins = c("ivig")
+medgroups$dmard = c("rituximab", "methotrexate", "cellcept")
 
 
 events = cleanEvents(events, medgroups)
@@ -88,7 +88,7 @@ medcolors= c("penicillin"="#66c2a5",
              "nsaid" = "#e7298a",
              "corticosteroid.oral" = "#a6d854",
              "corticosteroid.iv" = "#ffd92f",
-             "antibody" = "#e5c494",
+             "immunoglobulins" = "#e5c494",
              "dmard" = "#b3b3b3")
 
 clusters = unique(sort(profiles$cluster))

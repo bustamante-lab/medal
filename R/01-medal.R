@@ -81,15 +81,15 @@ medgroups$macrolide = c("azithromycin")
 medgroups$nsaid = c("ibuprofen", "naproxen", "indomethacin", "sulindac", "aspirin")
 medgroups$corticosteroid.oral = c("prednisone", "maintenance prednisone", "decadron")
 medgroups$corticosteroid.iv = c("solumedrol")
-medgroups$antibody = c("rituximab", "ivig")
-medgroups$dmard = c("plaquenil", "methotrexate", "cellcept")
+medgroups$immunoglobulins = c("ivig")
+medgroups$dmard = c("rituximab", "methotrexate", "cellcept")
 
 
 data = cleanEvents(events, medgroups)
 
 data = rightCensoring(data, 2)
 
-write.csv(data, "../../clinical/data-matrix-clean.csv")
+write.csv(data, "../../data/data-matrix-clean.csv")
 
 
 
@@ -99,7 +99,7 @@ write.csv(data, "../../clinical/data-matrix-clean.csv")
 #-------
 #Calling pyMEDAL
 
-system('python3 ../pymedal/pymedal.py ../../clinical/data-matrix-clean.csv', wait=TRUE)
+system('python3 ../pymedal/pymedal.py ../../data/data-matrix-clean.csv', wait=TRUE)
 
 
 distMatrix = read.table("distance_mat.txt")
@@ -164,24 +164,24 @@ color.vector2 = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
 
 dend = getDendrogram(d, k, color.vector)
 gDend <- plotDendrogram(dend, k)
-gMDSclus12 <- plotMDS(d, dend, color.vector, 1, 2, "MDS (hierarchical clustering)")
-gMDSclus34 <- plotMDS(d, dend, color.vector, 3, 4, "MDS (hierarchical clustering)")
+gMDSclus12 <- plotMDS(d, as.character(cutree(dend, k)), color.vector, 1, 2, "MDS (hierarchical clustering)")
+gMDSclus34 <- plotMDS(d, as.character(cutree(dend, k)), color.vector, 3, 4, "MDS (hierarchical clustering)")
 
 kmeans = getKMeansClusteringPCA(d, k)
-#gMDSkmeans12 <- plotMDS(kmeans, color.vector, 1, 2, "MDS (k-means)")
-#gMDSkmeans34 <- plotMDS(kmeans, color.vector, 3, 4, "MDS (k-means)")
+gMDSkmeans12 <- plotMDS(d, kmeans$cluster, color.vector, 1, 2, "MDS (k-means)")
+gMDSkmeans34 <- plotMDS(d, kmeans$cluster, color.vector, 3, 4, "MDS (k-means)")
 
 
-# tsne1 = getHierarchicalClusteringTSNE(d, k)
-# gTSNEclus <- plotTSNE(tsne1, color.vector, "TSNE (hierarchical clustering)")
+tsne1 = getHierarchicalClusteringTSNE(d, k, perplexity = 4)
+gTSNEclus <- plotTSNE(tsne1, color.vector, "TSNE (hierarchical clustering)")
  
-# tsne2 = getKMeansClusteringTSNE(d, k)
-# gTSNEkmeans <- plotTSNE(tsne2, color.vector, "TSNE (k-means)")
+tsne2 = getKMeansClusteringTSNE(d, k, perplexity = 4)
+gTSNEkmeans <- plotTSNE(tsne2, color.vector, "TSNE (k-means)")
 
 
 # Combine plots and save
 gpanels <- ggarrange(gDend, 
-                     ggarrange(gMDSclus12, gMDSclus34,
+                     ggarrange(gMDSclus12, gTSNEclus,
                                labels = c("B", "C"),
                                align = "hv",
                                legend="bottom", common.legend = TRUE),
@@ -219,4 +219,4 @@ round(entropy(kmeans$cluster, cutree(dend,4)), digits=2)
 assignment = cutree(dend,k)
 index = which(profiles$id %in% names(assignment))
 write.csv(cbind(profiles[index,], cluster=assignment),
-          "../../clinical/data-matrix-profiles-cluster.csv")
+          "../../data/data-matrix-profiles-cluster.csv")

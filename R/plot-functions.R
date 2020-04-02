@@ -50,13 +50,13 @@ plotDendrogram <- function(dend, k, title="Dendrogram (hierarchical clustering)"
   
 }
 
-plotMDS <- function(d, dend, color.vector=mycolors, dim1, dim2, title="MDS"){
+plotMDS <- function(d, cluster, color.vector=mycolors, dim1, dim2, title="MDS"){
   
   #Merge cluster and data
   score = isoMDS(as.matrix(d), k=4)
   score = as.data.frame(score$points)
   #score = as.data.frame(prcomp(d, scale. = FALSE)$x)
-  score$cluster = as.character(cutree(dend, k))
+  score$cluster = cluster
   
   #Get axis names
   nms <- names(score)
@@ -93,10 +93,10 @@ plotTSNE <- function(score, color.vector, title="MDS"){
   
   # plot of observations
   gMDS1 <- ggplot(data = score, aes(x = V1, y = V2)) +
-    # geom_text_repel(aes(label = rownames(scores)),
-    #                 color = "grey30",
-    #                 min.segment.length = unit(0.5, 'lines'),
-    #                 segment.color = 'grey90') +
+    geom_text_repel(aes(label = rownames(score), color=cluster),
+                    #color = "grey30",
+                    min.segment.length = unit(0.5, 'lines'),
+                    segment.color = 'grey90', show.legend = FALSE) +
     geom_point(aes(colour = cluster), size=2) +
     stat_chull(aes(colour = cluster, fill = cluster), alpha = 0.1, geom = "polygon") +
     #stat_ellipse(aes(colour = cluster, fill=cluster), geom="polygon", alpha=0.1) +
