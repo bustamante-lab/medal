@@ -25,9 +25,9 @@ library(aricode)
 library(NMF) #for cluster purity and entropy
 
 #Additional functions
-#source("medal-functions.R")
-source("support-functions.R")
-source("plot-functions.R")
+#source("fun-medal.R") #PyMedal is used instead
+source("fun-support.R")
+source("fun-plot.R")
 
 
 # Step 1. Read file --------------------------------------------------

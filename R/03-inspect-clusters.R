@@ -11,8 +11,8 @@ remove(list=ls())
 library(ggplot2)
 library(ggpubr)
 
-source("support-functions.R")
-source("plot-functions.R")
+source("fun-support.R")
+source("fun-plot.R")
 
 
 #--------------------------------------------------
@@ -22,7 +22,7 @@ source("plot-functions.R")
 
 #---
 #File with patient ID (de-ID), comorbidities, initial clinical presentation, etc.
-profiles = read.csv("../../data/data-matrix-profiles-cluster.csv", stringsAsFactors = FALSE)
+profiles = read.csv("../../data/patients.csv", stringsAsFactors = FALSE)
 
 #Variables for stratification
 strats <- c("is_male", "NHW", "OCD", "foodprob", "anx", 
@@ -111,7 +111,7 @@ gPath4 <- plotTimeSeriesDrug(4, events, profiles, medcolors, medgroups, years)
 
 
 #Save plot
-gpanels <- ggarrange(gPath1, gPath3, gPath2, gPath4,
+gpanels <- ggarrange(gPath1, gPath2, gPath3, gPath4,
                      labels = c("A", "B", "C", "D"),
                      ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
 ggexport(gpanels, filename="../images/Figure3-clusters.png", height = 4000, width = 5000, res=300)
@@ -124,16 +124,16 @@ ggexport(gpanels, filename="../images/Figure3-clusters.png", height = 4000, widt
 #--------------------------------------------------
 
 # #Get all triangles
-# gTri1 <- plotCoOcurrenceTriangle(1, events, profiles, names(medgroups), years)
-# gTri2 <- plotCoOcurrenceTriangle(2, events, profiles, names(medgroups), years)
-# gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups), years)
-# gTri4 <- plotCoOcurrenceTriangle(4, events, profiles, names(medgroups), years)
-# 
-# #Save plot
-# gpanels <- ggarrange(gTri1, gTri3, gTri2, gTri4,
-#                      labels = c("A", "B", "C", "D"),
-#                      ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
-# ggexport(gpanels, filename="../images/Figure3-triangles.png", height = 2000, width = 6000, res=300)
+ gTri1 <- plotCoOcurrenceTriangle(1, events, profiles, names(medgroups), years)
+ gTri2 <- plotCoOcurrenceTriangle(2, events, profiles, names(medgroups), years)
+ gTri3 <- plotCoOcurrenceTriangle(3, events, profiles, names(medgroups), years)
+ gTri4 <- plotCoOcurrenceTriangle(4, events, profiles, names(medgroups), years)
+ 
+#Save plot
+ gpanels <- ggarrange(gTri1, gTri2, gTri3, gTri4,
+                      labels = c("A", "B", "C", "D"),
+                      ncol = 4, nrow = 1, legend="none", common.legend = FALSE)
+ggexport(gpanels, filename="../images/FigureC-triangles.png", height = 2000, width = 6000, res=300)
 
 
 
@@ -198,24 +198,24 @@ color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
    
    
   # #Save plot
-   gpanels <- ggarrange(gGIS1, gGIS3, gGIS2, gGIS4, 
-                        gcbi1, gcbi3, gcbi2, gcbi4,
+   gpanels <- ggarrange(gGIS1, gGIS2, gGIS3, gGIS4, 
+                        gcbi1, gcbi2, gcbi3, gcbi4,
                         ncol = 4, nrow = 2, legend="none", common.legend = FALSE)
    ggexport(gpanels, filename="../images/Figure4-scores.png", height = 3000, width = 5000, res=300)
   
    
-   gpanels <- ggarrange(gocd1, gocd3, gocd2, gocd4,
-                        gcyb1, gcyb3, gcyb2, gcyb4,
-                        gAgg1, gAgg3, gAgg2, gAgg4,
-                        gcis1, gcis3, gcis2, gcis4,
+   gpanels <- ggarrange(gocd1, gocd2, gocd3, gocd4,
+                        gcyb1, gcyb2, gcyb3, gcyb4,
+                        gAgg1, gAgg2, gAgg3, gAgg4,
+                        gcis1, gcis2, gcis3, gcis4,
                         ncol = 4, nrow = 4, legend="none", common.legend = FALSE)
    ggexport(gpanels, filename="../images/FigureB-other-scores1.png", height = 3000, width = 5000, res=300)
    
    
-   gpanels <- ggarrange(garfi1, garfi3, garfi2, garfi4,
-                        gyg1, gyg3, gyg2, gyg4,
-                        gwpi1, gwpi3, gwpi2, gwpi4,
-                        gsss1, gsss3, gsss2, gsss4,
+   gpanels <- ggarrange(garfi1, garfi2, garfi3, garfi4,
+                        gyg1, gyg2, gyg3, gyg4,
+                        gwpi1, gwpi2, gwpi3, gwpi4,
+                        gsss1, gsss2, gsss3, gsss4,
                         ncol = 4, nrow = 4, legend="none", common.legend = FALSE)
    ggexport(gpanels, filename="../images/FigureB-other-scores2.png", height = 3000, width = 5000, res=300)
    
