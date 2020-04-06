@@ -1,17 +1,27 @@
-#################################################################
-##                                                             ##
-## Project: Medication Alignment Algorithm (Medal)             ##  
-## Author: Arturo Lopez Pineda (arturolp[at]stanford[dot]edu)  ##
-## Date: Feb 27, 2019                                          ##
-## Updated: Mar 26, 2020                                       ##
-##                                                             ##
-#################################################################
+---
+date: "`r lubridate::today('US/Pacific')`"
+author: "Arturo Lopez Pineda"
+title: "Medication Alignment Algorithm (Medal)"
+output: rmarkdown::github_document
+code_folding: hide
+df_print: default
+toc: yes
+toc_float: yes
+editor_options: 
+  chunk_output_type: console
+---
 
+# Step 0. Load required libraries
+
+```{r, load-libraries}
 
 remove(list=ls())
 
+#General
+library(tidyverse)
+library(here)
+
 #Plotting libraries
-#library(magrittr)
 library(ggplot2)
 library(ggpubr)
 library(ggrepel)
@@ -19,19 +29,22 @@ library(ggrepel)
 #Clustering libraries
 library(factoextra)
 library(NbClust)
-#library(cluster)
 library(aricode)
-#library(tsne)
+library(tsne)
 library(NMF) #for cluster purity and entropy
 
 #Additional functions
-#source("fun-medal.R") #PyMedal is used instead
-source("fun-support.R")
-source("fun-plot.R")
+#source(here("programs", "fun-medal.R")) #PyMedal is used instead
+source(here("programs", "fun-support.R"))
+source(here("programs", "fun-plot.R"))
 
+```
 
-# Step 1. Read file --------------------------------------------------
+\  
 
+# Step 1. Read file
+
+```{r, read-files}
 
 
 #---
@@ -69,9 +82,12 @@ rows = which(outcomes$id %in% patients)
 outcomes = outcomes[rows,c("id", "gi_new", "daysSinceBirth")]
 
 
+```
 
-# Step 2. Clean Data --------------------------------------------------
+\ 
 
+# Step 2. Clean Data
+```{r, clean-data}
 
 # Group by class of medication
 medgroups = list()
@@ -91,10 +107,12 @@ data = rightCensoring(data, 2)
 
 write.csv(data, "../../data/data-matrix-clean.csv")
 
+```
 
+\  
 
-# Step 3. Create a distance matrix --------------------------------------------------
-
+# Step 3. Create a distance matrix
+```{r, call-medal}
 
 #-------
 #Calling pyMEDAL
@@ -109,7 +127,13 @@ pID = as.vector(unlist(patientIDs))
 colnames(distMatrix) = pID
 rownames(distMatrix) = pID
 
-# Step 4 Choose number of clusters --------------------------------------------------
+```
+
+\  
+
+# Step 4 Choose number of clusters
+
+```{r, num-clusters}
 
 #d = scale(distMatrix, center=FALSE)
 d = distMatrix
@@ -151,9 +175,13 @@ gpanels <- ggarrange(elbow, silhouette, gapStat,
                      align="v", common.legend = FALSE)
 ggexport(gpanels, filename="../images/Figure1-num-clusters.png", height = 1200, width = 4000, res=300)
 
+```
 
+\ 
 
-# Step 5 Plots --------------------------------------------------------------
+# Step 5. Plot clusters
+
+```{r, plot-clusters}
 
 #Colors to be used
 color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
@@ -191,8 +219,13 @@ gpanels <- ggarrange(gDend,
                      legend="bottom", common.legend = TRUE)
 ggexport(gpanels, filename="../images/Figure2-dendro-mds.png", height = 4000, width = 4000, res=300)
 
+```
 
-#--------------------------------------------------
+\ 
+
+# Step 6. Comparison to K-means
+
+```{r, comparison}
 
 recoded = kmeans$cluster
 recoded[which(recoded == 3)] = 1
@@ -215,8 +248,20 @@ round(entropy(kmeans$cluster, cutree(dend,4)), digits=2)
 #https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
 
 
+```
+
+\ 
+
+# Step 7. Save cluster assignment
+
+```{r, save-cluster}
+
+
 #Saving the cluster to profiles
 assignment = cutree(dend,k)
 index = which(profiles$id %in% names(assignment))
 write.csv(cbind(profiles[index,], cluster=assignment),
           "../../data/data-matrix-profiles-cluster.csv")
+```
+
+\ 
