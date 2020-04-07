@@ -7,7 +7,7 @@
 ###############################################################
 
 #library(tsne)
-library(Rtsne)
+#library(Rtsne)
 
 mycolors = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
 
@@ -101,7 +101,6 @@ getDendrogram <- function(d, k, color.vector=mycolors){
     hclust(method="ward.D") %>% as.dendrogram
   
   #Get color ordering
-  #hclust.assignment = cutree(dend, k)
   assignment = cutree(dend, k)
   order = unique(assignment[order.dendrogram(dend)])
   ordered.colors = color.vector[order]
