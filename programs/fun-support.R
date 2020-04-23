@@ -148,32 +148,24 @@ getKMeansClusteringPCA <- function(d, k){
   return(scores)
 }
 
-getKMeansClusteringTSNE <- function(d, k, perplexity=k){
+getKMeansClusteringTSNE <- function(d, k, tsne){
   
   #K-means clustering
   k2 <- kmeans(d, centers = k, nstart = 25)
   
-  # TSNE
-  #tsne1 = as.data.frame(tsne(d, k, perplexity))
-  tsne1 = as.data.frame(Rtsne(d, perplexity=4, is_distance=TRUE)$Y)
-  
-  tsne1 = cbind(tsne1, cluster=as.character(k2$cluster))
+  tsne1 = cbind(tsne, cluster=as.character(k2$cluster))
   rownames(tsne1) <- rownames(d)
   
   return(tsne1)
 }
 
-getHierarchicalClusteringTSNE <- function(d, k, perplexity=k){
+getHierarchicalClusteringTSNE <- function(d, k, tsne){
   # Create Dendrogram
   dend <- d %>% as.dist %>%
     hclust(method="ward.D") %>% as.dendrogram 
   hclust.assignment = cutree(dend, k)
   
-  #TSNE
-  #tsne1 = as.data.frame(tsne(d, k, perplexity))
-  tsne1 = as.data.frame(Rtsne(d, perplexity=4, is_distance=TRUE)$Y)
-  
-  tsne1 = cbind(tsne1, cluster=as.character(hclust.assignment))
+  tsne1 = cbind(tsne, cluster=as.character(hclust.assignment))
   rownames(tsne1) <- rownames(d)
   
   return(tsne1)

@@ -34,6 +34,9 @@ library(Rtsne)
 library(dendextend)
 library(NMF) #for cluster purity and entropy
 
+#Heatmap
+library("pheatmap")
+
 #Additional functions
 #source(here("programs", "fun-medal.R")) #PyMedal is used instead
 source(here("programs", "fun-support.R"))
@@ -133,7 +136,6 @@ rownames(distMatrix) = pID
 ```{r, num-clusters}
 
 d = distMatrix
-k=4
 
 # Elbow method
 elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
@@ -167,6 +169,8 @@ ggexport(gpanels, filename=here("images", "Figure1-num-clusters.png"), height = 
 
 gpanels
 
+
+
 ```
 
 \ 
@@ -175,9 +179,20 @@ gpanels
 
 ```{r, plot-clusters}
 
+k=4
+
 #Colors to be used
 color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
-#color.vector3 = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
+#color.vector2 = c("1"="#ca3542", "2"="#00a572", "3"="#0080ff", "4"="#e8a631")
+color.vector3 = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
+
+
+# library(RColorBrewer)
+# qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
+# col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+# color.vector = col_vector[1:k]
+# color.vector3 = col_vector[k+1:k+k]
+
 
 #Plot Clustering strategies
 dend = getDendrogram(d, k, color.vector)
@@ -186,15 +201,18 @@ gMDSclus12 <- plotMDS(d, as.character(cutree(dend, k)), color.vector, 1, 2, "MDS
 gMDSclus34 <- plotMDS(d, as.character(cutree(dend, k)), color.vector, 3, 4, "MDS (hierarchical clustering)")
 
 kmeans = getKMeansClusteringPCA(d, k)
-gMDSkmeans12 <- plotMDS(d, kmeans$cluster, color.vector, 1, 2, "MDS (k-means)")
-gMDSkmeans34 <- plotMDS(d, kmeans$cluster, color.vector, 3, 4, "MDS (k-means)")
+gMDSkmeans12 <- plotMDS(d, kmeans$cluster, color.vector3, 1, 2, "MDS (k-means)")
+gMDSkmeans34 <- plotMDS(d, kmeans$cluster, color.vector3, 3, 4, "MDS (k-means)")
 
 
-tsne1 = getHierarchicalClusteringTSNE(d, k, perplexity = 4)
-gTSNEclus <- plotTSNE(tsne1, color.vector, "TSNE (hierarchical clustering)")
+
+tsne1 = as.data.frame(Rtsne(d, perplexity=4, is_distance=TRUE, initial_dims=5, theta=0)$Y)
+
+tsne2 = getHierarchicalClusteringTSNE(d, k, tsne1)
+gTSNEclus <- plotTSNE(tsne2, color.vector, "TSNE (hierarchical clustering)")
  
-tsne2 = getKMeansClusteringTSNE(d, k, perplexity = 4)
-gTSNEkmeans <- plotTSNE(tsne2, color.vector, "TSNE (k-means)")
+tsne3 = getKMeansClusteringTSNE(d, k, tsne1)
+gTSNEkmeans <- plotTSNE(tsne3, color.vector3, "TSNE (k-means)")
 
 
 # Combine plots and save
@@ -209,7 +227,41 @@ gpanels <- ggarrange(gDend,
                      legend="bottom", common.legend = TRUE)
 ggexport(gpanels, filename=here("images", "Figure2-dendro-mds.png"), height = 4000, width = 4000, res=300)
 
-gpanels
+#gpanels
+
+
+gpanels <- ggarrange(ggarrange(gMDSkmeans12, gTSNEkmeans,
+                               align = "h",
+                               legend="bottom", common.legend = TRUE),
+                     ggarrange(gMDSclus12, gTSNEclus,
+                               align = "h",
+                               legend="bottom", common.legend = TRUE),
+                     ncol = 1, nrow=2, 
+                     labels = c("A", "B"),
+                     align = "h",
+                     legend="bottom", common.legend = FALSE)
+ggexport(gpanels, filename=here("images", "Figure2-b-dendro-mds.png"), height = 4000, width = 4000, res=300)
+
+
+kmeans_annot <- as.data.frame(kmeans["cluster"]) %>%
+  rename(kmeans=cluster)
+hclust_annot <- as.data.frame(factor(cutree(dend,k))) %>%
+  rename(hclust = colnames(.)[1])
+
+gpanels <- pheatmap(as.dist(d), #cutree_cols = k, cutree_rows = k,
+                    scale="none",
+                    show_colnames = TRUE,
+                    show_rownames = TRUE,
+                    #drop_levels  = TRUE,
+                    labels_col = paste0(rownames(d)),
+                    labels_row = paste0(rownames(d)),
+                    annotation_col = kmeans_annot,
+                    annotation_row = hclust_annot,
+         #annotation_colors = recode(kmeans$cluster, "1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff"),
+         cluster_rows = TRUE,
+         cluster_cols = TRUE)
+
+ggexport(gpanels, filename=here("images", "Figure2-c-heatmap.png"), height = 2800, width = 3000, res=300)
 
 ```
 
@@ -258,6 +310,21 @@ res %>%
 \ 
 
 # Step 7. Save cluster assignment
+
+```{r, save-cluster}
+
+
+#Saving the cluster to profiles
+assignment <- cutree(dend,k)
+#index = which(profiles$id %in% names(assignment))
+#write.csv(cbind(profiles[index,], cluster=assignment),
+#          "../data/data-matrix-profiles-cluster.csv")
+```
+
+\ 
+
+
+# Step 8. Evaluate clusters
 
 ```{r, save-cluster}
 
