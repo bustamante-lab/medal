@@ -225,7 +225,7 @@ gpanels <- ggarrange(gDend,
                      labels = c("A"),
                      align = "h",
                      legend="bottom", common.legend = TRUE)
-ggexport(gpanels, filename=here("images", "Figure2-dendro-mds.png"), height = 4000, width = 4000, res=300)
+ggexport(gpanels, filename=here("images", "Figure2-a-dendro-mds.png"), height = 4000, width = 4000, res=300)
 
 #gpanels
 
@@ -247,21 +247,35 @@ kmeans_annot <- as.data.frame(kmeans["cluster"]) %>%
   rename(kmeans=cluster)
 hclust_annot <- as.data.frame(factor(cutree(dend,k))) %>%
   rename(hclust = colnames(.)[1])
+ann_colors <- list(kmeans = color.vector, hclust = color.vector3)
 
-gpanels <- pheatmap(as.dist(d), #cutree_cols = k, cutree_rows = k,
+
+gHeatMap <- as_grob(pheatmap(d, #cutree_cols = 9, cutree_rows = 9,
                     scale="none",
                     show_colnames = TRUE,
                     show_rownames = TRUE,
-                    #drop_levels  = TRUE,
+                    clustering_distance_rows = "minkowski",
+                    clustering_distance_cols = "minkowski",
+                    clustering_method = "ward.D",
                     labels_col = paste0(rownames(d)),
                     labels_row = paste0(rownames(d)),
                     annotation_col = kmeans_annot,
                     annotation_row = hclust_annot,
-         #annotation_colors = recode(kmeans$cluster, "1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff"),
-         cluster_rows = TRUE,
-         cluster_cols = TRUE)
+                    annotation_colors = ann_colors,
+                    legend = TRUE,
+                    cluster_rows = TRUE,
+                    cluster_cols = TRUE))
+  
 
-ggexport(gpanels, filename=here("images", "Figure2-c-heatmap.png"), height = 2800, width = 3000, res=300)
+ggexport(gHeatMap, filename=here("images", "Figure2-c-heatmap.png"), height = 2800, width = 3000, res=300)
+
+# Combine plots and save
+gpanels <- ggarrange(gMDSclus12, gMDSkmeans12,
+                               labels = c("A", "B"),
+                               align = "hv",
+                               ncol = 2, nrow=1, 
+                               legend="bottom", common.legend = FALSE)
+ggexport(gpanels, filename=here("images", "Figure2-mds.png"), height = 2000, width = 4000, res=300)
 
 ```
 
@@ -326,14 +340,10 @@ assignment <- cutree(dend,k)
 
 # Step 8. Evaluate clusters
 
-```{r, save-cluster}
+```{r, evaluate-cluster}
 
+# TBD
 
-#Saving the cluster to profiles
-assignment <- cutree(dend,k)
-#index = which(profiles$id %in% names(assignment))
-#write.csv(cbind(profiles[index,], cluster=assignment),
-#          "../data/data-matrix-profiles-cluster.csv")
 ```
 
 \ 

@@ -97,7 +97,7 @@ getDendrogram <- function(d, k, color.vector=mycolors){
   
 
   # Create Dendrogram
-  dend <- d %>% as.dist %>%
+  dend <- d %>% dist(method="minkowski") %>% #as.dist %>%
     hclust(method="ward.D") %>% as.dendrogram
   
   #Get color ordering
