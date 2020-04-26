@@ -25,6 +25,7 @@ library(knitr)
 library(ggplot2)
 library(ggpubr)
 library(ggrepel)
+library(ggplotify)
 
 #Clustering libraries
 library(factoextra)
@@ -139,16 +140,18 @@ d = distMatrix
 
 # Elbow method
 elbow <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "wss") +
-  geom_vline(xintercept = k, linetype = "dashed", color="#5581B0", size=0.6) +
+  #geom_vline(xintercept = k, linetype = "dashed", color="#5581B0", size=0.6) +
   labs(title = "Elbow method",
-       y="Total within-clusters sum of squares")
+       y="Total within-clusters sum of squares") +
+  theme_light()
 
 # Silhouette method
 silhouette <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette", 
                            print.summary = FALSE, barcolor = "white") +
   #geom_vline(xintercept = 2, linetype = "dashed", color="#5581B0", size=0.6) +
-  geom_vline(xintercept = 4, linetype = "dashed", color="#5581B0", size=0.6) +
-  labs(title = "Silhouette method")
+  #geom_vline(xintercept = 4, linetype = "dashed", color="#5581B0", size=0.6) +
+  labs(title = "Silhouette method") +
+  theme_light()
 
 
 # Gap statistic
@@ -157,15 +160,22 @@ silhouette <- fviz_nbclust(x=d, diss=as.dist(d), hcut, method = "silhouette",
 # Use verbose = FALSE to hide computing progression.
 set.seed(123)
 gapStat <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
-                        method = "gap_stat", nboot = 50, print.summary = FALSE,
+                        method = "gap_stat", nboot = 50, print.summary = TRUE,
                         maxSE=list(method="Tibs2001SEmax", SE.factor=1)) +
-  labs(title = "Gap statistic method")
+  labs(title = "Gap statistic method") +
+  theme_light()
 
-gpanels <- ggarrange(elbow, silhouette, gapStat,
-                     labels = c("A", "B", "C"),
-                     ncol = 3, nrow = 1, legend="bottom", 
+clest <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25, 
+                        method = "gap_stat", nboot = 50, print.summary = TRUE,
+                        maxSE=list(method="globalSEmax", SE.factor=3)) +
+  labs(title = "Clest method") +
+  theme_light()
+
+gpanels <- ggarrange(elbow, silhouette, gapStat, clest,
+                     labels = c("A", "B", "C", "D"),
+                     ncol = 2, nrow = 2, legend="bottom", 
                      align="v", common.legend = FALSE)
-ggexport(gpanels, filename=here("images", "Figure1-num-clusters.png"), height = 1200, width = 4000, res=300)
+ggexport(gpanels, filename=here("images", "Figure1-num-clusters.png"), height = 2500, width = 3000, res=300)
 
 gpanels
 
@@ -179,49 +189,43 @@ gpanels
 
 ```{r, plot-clusters}
 
-k=4
+k=6
 
 #Colors to be used
-color.vector = c("1"="#e8a631", "2"="#ca3542", "3"="#00a572", "4"="#0080ff")
-#color.vector2 = c("1"="#ca3542", "2"="#00a572", "3"="#0080ff", "4"="#e8a631")
-color.vector3 = c("1"="mediumorchid3", "2"="darkturquoise", "3"="olivedrab3", "4"="orangered3")
-
-
-# library(RColorBrewer)
-# qual_col_pals = brewer.pal.info[brewer.pal.info$category == 'qual',]
-# col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
-# color.vector = col_vector[1:k]
-# color.vector3 = col_vector[k+1:k+k]
+colors.hclust <- c("1"="#a6cee3", "2"="#ff7f00", "3"="#b2df8a", 
+                   "4"="#6a3d9a", "5"="#fcbba1", "6"="#e31a1c")
+colors.kmeans <- c("1"="#fdbf6f", "2"="#1f78b4", "3"="#cab2d6", 
+                   "4"="#33a02c", "5"="#fb9a99", "6"="#b15928")
 
 
 #Plot Clustering strategies
-dend = getDendrogram(d, k, color.vector)
+dend = getDendrogram(d, k, colors.hclust)
 gDend <- plotDendrogram(dend, k)
-gMDSclus12 <- plotMDS(d, as.character(cutree(dend, k)), color.vector, 1, 2, "MDS (hierarchical clustering)")
-gMDSclus34 <- plotMDS(d, as.character(cutree(dend, k)), color.vector, 3, 4, "MDS (hierarchical clustering)")
+gMDSclus12 <- plotMDS(d, as.character(cutree(dend, k)), colors.hclust, 1, 2, "Hierarchical clustering (hclust))")
+#gMDSclus34 <- plotMDS(d, as.character(cutree(dend, k)), colors.hclust, 3, 4, "MDS (hierarchical clustering)")
 
 kmeans = getKMeansClusteringPCA(d, k)
-gMDSkmeans12 <- plotMDS(d, kmeans$cluster, color.vector3, 1, 2, "MDS (k-means)")
-gMDSkmeans34 <- plotMDS(d, kmeans$cluster, color.vector3, 3, 4, "MDS (k-means)")
+gMDSkmeans12 <- plotMDS(d, kmeans$cluster, colors.kmeans, 1, 2, "K-means")
+#gMDSkmeans34 <- plotMDS(d, kmeans$cluster, colors.kmeans, 3, 4, "MDS (k-means)")
 
 
-
+#TSNE
 tsne1 = as.data.frame(Rtsne(d, perplexity=4, is_distance=TRUE, initial_dims=5, theta=0)$Y)
 
 tsne2 = getHierarchicalClusteringTSNE(d, k, tsne1)
-gTSNEclus <- plotTSNE(tsne2, color.vector, "TSNE (hierarchical clustering)")
+gTSNEclus <- plotTSNE(tsne2, colors.hclust, "TSNE (hierarchical clustering)")
  
 tsne3 = getKMeansClusteringTSNE(d, k, tsne1)
-gTSNEkmeans <- plotTSNE(tsne3, color.vector3, "TSNE (k-means)")
+gTSNEkmeans <- plotTSNE(tsne3, colors.kmeans, "TSNE (k-means)")
 
 
-# Combine plots and save
-gpanels <- ggarrange(gDend, 
+#Combine plots and save
+gpanels <- ggarrange(gDend,
                      ggarrange(gMDSclus12, gTSNEclus,
                                labels = c("B", "C"),
                                align = "hv",
                                legend="bottom", common.legend = TRUE),
-                     ncol = 1, nrow=2, 
+                     ncol = 1, nrow=2,
                      labels = c("A"),
                      align = "h",
                      legend="bottom", common.legend = TRUE)
@@ -236,7 +240,7 @@ gpanels <- ggarrange(ggarrange(gMDSkmeans12, gTSNEkmeans,
                      ggarrange(gMDSclus12, gTSNEclus,
                                align = "h",
                                legend="bottom", common.legend = TRUE),
-                     ncol = 1, nrow=2, 
+                     ncol = 1, nrow=2,
                      labels = c("A", "B"),
                      align = "h",
                      legend="bottom", common.legend = FALSE)
@@ -247,10 +251,10 @@ kmeans_annot <- as.data.frame(kmeans["cluster"]) %>%
   rename(kmeans=cluster)
 hclust_annot <- as.data.frame(factor(cutree(dend,k))) %>%
   rename(hclust = colnames(.)[1])
-ann_colors <- list(kmeans = color.vector, hclust = color.vector3)
+ann_colors <- list(kmeans = colors.kmeans, hclust = colors.hclust)
 
 
-gHeatMap <- as_grob(pheatmap(d, #cutree_cols = 9, cutree_rows = 9,
+gHeatMap <- as.ggplot(pheatmap(d, cutree_cols = 6, cutree_rows = 6,
                     scale="none",
                     show_colnames = TRUE,
                     show_rownames = TRUE,
@@ -267,15 +271,19 @@ gHeatMap <- as_grob(pheatmap(d, #cutree_cols = 9, cutree_rows = 9,
                     cluster_cols = TRUE))
   
 
-ggexport(gHeatMap, filename=here("images", "Figure2-c-heatmap.png"), height = 2800, width = 3000, res=300)
 
 # Combine plots and save
-gpanels <- ggarrange(gMDSclus12, gMDSkmeans12,
-                               labels = c("A", "B"),
+gpanels <- ggarrange(gHeatMap, 
+                     ggarrange(gMDSclus12, gMDSkmeans12,
+                               labels = c("B", "C"),
                                align = "hv",
                                ncol = 2, nrow=1, 
-                               legend="bottom", common.legend = FALSE)
-ggexport(gpanels, filename=here("images", "Figure2-mds.png"), height = 2000, width = 4000, res=300)
+                               legend="bottom", common.legend = FALSE),
+                     labels = c("A", ""),
+                     align = "hv",
+                     ncol = 1, nrow=2)
+
+ggexport(gpanels, filename=here("images", "Figure2-heatmap-mds.png"), height = 5000, width = 4000, res=300)
 
 ```
 
