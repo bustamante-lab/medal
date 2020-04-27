@@ -171,11 +171,11 @@ clest <- fviz_nbclust(x=d, diss=as.dist(d), hcut, nstart = 25,
   labs(title = "Clest method") +
   theme_light()
 
-gpanels <- ggarrange(elbow, silhouette, gapStat, clest,
+numKPanels <- ggarrange(elbow, silhouette, gapStat, clest,
                      labels = c("A", "B", "C", "D"),
                      ncol = 2, nrow = 2, legend="bottom", 
                      align="v", common.legend = FALSE)
-ggexport(gpanels, filename=here("images", "Figure1-num-clusters.png"), height = 2500, width = 3000, res=300)
+ggexport(numKPanels, filename=here("images", "Figure1-num-clusters.png"), height = 2500, width = 3000, res=300)
 
 gpanels
 
@@ -201,7 +201,7 @@ colors.kmeans <- c("1"="#fdbf6f", "2"="#1f78b4", "3"="#cab2d6",
 #Plot Clustering strategies
 dend = getDendrogram(d, k, colors.hclust)
 gDend <- plotDendrogram(dend, k)
-gMDSclus12 <- plotMDS(d, as.character(cutree(dend, k)), colors.hclust, 1, 2, "Hierarchical clustering (hclust))")
+gMDSclus12 <- plotMDS(d, as.character(cutree(dend, k)), colors.hclust, 1, 2, "Hierarchical clustering (hclust)")
 #gMDSclus34 <- plotMDS(d, as.character(cutree(dend, k)), colors.hclust, 3, 4, "MDS (hierarchical clustering)")
 
 kmeans = getKMeansClusteringPCA(d, k)
@@ -293,38 +293,62 @@ ggexport(gpanels, filename=here("images", "Figure2-heatmap-mds.png"), height = 5
 
 ```{r, comparison}
 
-res <- tibble(k=c(2,4))
+NMI <- c()
+Entropy <- c()
+Purity <- c()
 
-#Assume a k=2, then merge sub-clusters
-recoded = kmeans$cluster
-recoded[which(recoded == 3)] = 1
-recoded[which(recoded == 4)] = 2
+for(i in 1:10){
+  kmeans = getKMeansClusteringPCA(d, i)$cluster
+  hclust = cutree(getDendrogram(d, i, colors.hclust), i)
+  
+  #Calculating Normalized Mutual Information
+  #https://course.ccs.neu.edu/cs6140sp15/7_locality_cluster/Assignment-6/NMI.pdf
+  NMI = c(NMI, round(NMI(kmeans, hclust, variant="sum"), digits=2))
+  
+  #Calculating Cluster purity
+  #https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
+  Purity = c(Purity, round(purity(kmeans, hclust), digits=2))
+  
+  #Calculating Cluster entropy
+  #https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
+  Entropy = c(Entropy, round(entropy(kmeans, hclust), digits=2))
 
-#Calculating Normalized Mutual Information
-#https://course.ccs.neu.edu/cs6140sp15/7_locality_cluster/Assignment-6/NMI.pdf
-res <- res %>%
-  bind_cols(
-    NMI = c(round(NMI(recoded, cutree(dend,2), variant="sum"), digits=2),
-          round(NMI(kmeans$cluster, cutree(dend,4), variant="sum"), digits=2)))
+}
+
+#Print table
+results <- as.data.frame(cbind(k=c(1:10), NMI, Purity, Entropy))
+
+results %>%
+  kable()
+
+res <- bind_rows(results %>% 
+                   select(k, value=NMI) %>% 
+                   mutate(Test="NMI"),
+                 results %>% 
+                   select(k, value=Purity) %>% 
+                   mutate(Test="Purity"),
+                 results %>% 
+                   select(k, value=Entropy) %>% 
+                   mutate(Test="Entropy"))
   
 
-#Calculating Cluster purity
-#https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
-res <- res %>%
-  bind_cols(
-    Purity = c(round(purity(recoded, cutree(dend,2)), digits=2),
-            round(purity(kmeans$cluster, cutree(dend,4)), digits=2)))
+clus.test <- ggplot(res, aes(x=k, y=value, group=Test, color=Test)) +
+  geom_vline(xintercept=6, color="gray30", linetype="dashed", size=1.5) +
+  geom_point(size=2.5) +
+  geom_line(size=1) +
+  #geom_vline(xintercept=7, color="gray40", linetype="dashed") +
+  scale_colour_manual(values=c("#7fc97f", "#beaed4", "#fdc086")) +
+  scale_x_continuous(limits=c(1,10), breaks=c(0:10)) +
+  ggtitle("Comparison between K-means and Hierarchical Clustering")+
+  theme_light() +
+  theme(legend.position = "bottom")
 
+gpanel <- ggarrange(numKPanels, clus.test,
+                    labels = c("", "E"),
+                     align = "h",
+                     ncol = 1, nrow=2)
 
-#Calculating Cluster entropy
-#https://www.rdocumentation.org/packages/NMF/versions/0.21.0/topics/purity
-res <- res %>%
-  bind_cols(
-    Entropy = c(round(entropy(recoded, cutree(dend,2)), digits=2),
-             round(entropy(kmeans$cluster, cutree(dend,4)), digits=2)))
-
-res %>%
-  kable()
+ggexport(gpanel, filename=here("images", "Figure3-metrics.png"), height = 3600, width = 2000, res=300)
 
 
 ```
