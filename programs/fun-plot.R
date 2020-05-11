@@ -18,14 +18,15 @@
 
 
 
-medcolors= c("penicillin"="#66c2a5",
-             "cephalosporin" = "#fc8d62",
-             "macrolide" = "#8da0cb",
-             "nsaid" = "#e7298a",
-             "corticosteroid.oral" = "#a6d854",
-             "corticosteroid.iv" = "#ffd92f",
-             "antibody" = "#e5c494",
-             "dmard" = "#b3b3b3")
+# medcolors= c("penicillin"="#66c2a5",
+#              "cephalosporin" = "#fc8d62",
+#              "macrolide" = "#8da0cb",
+#              "nsaid" = "#e7298a",
+#              "corticosteroid.oral" = "#a6d854",
+#              "corticosteroid.iv" = "#ffd92f",
+#              "antibody" = "green",
+#              "immunoglobulins" = "#e5c494",
+#              "dmard" = "#b3b3b3")
 
 daysPerMonth = 30
 
@@ -116,10 +117,16 @@ plotTSNE <- function(score, color.vector, title="MDS"){
 
 plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, medgroups, years){
   
+  n = years*12
+  m = length(names(medgroups))
+  
   #Get the events for patients in a cluster
   patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
-  eveIDs = which(events[,"id"] %in% patIDs)
-  pat = events[eveIDs, ]
+  #eveIDs = which(events[,"id"] %in% patIDs)
+  #pat = events[eveIDs, ]
+  pat <- events %>%
+    filter(id %in% patIDs) %>%
+    as.data.frame()
   
   #Convert all days into months
   pat$start = round(pat$start/daysPerMonth)
@@ -155,7 +162,7 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
   
   
   #Reshape the matrix (Melt)
-  melted_drug <- melt(drug)
+  melted_drug <- reshape2::melt(drug)
   colnames(melted_drug) = c("med", "month", "value")
   melted_drug[which(melted_drug$value>1), "value"]=1 #avoiding duplicates
   
@@ -188,7 +195,8 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
     scale_fill_manual(name="Medications", values=medcolors,
                       labels=str_replace(names(medcolors), "\\.", " ")) +
     #Add labels
-    labs(title=paste("Medication usage in cluster", cluster), x="Years of follow-up") +
+    #labs(title=paste("Cluster", cluster), x="Years of follow-up") +
+    labs(title=paste("Cluster", cluster)) +
     #set base size for all font elements
     theme_bw()+
     theme(#Add a title
@@ -200,9 +208,12 @@ plotTimeSeriesDrug <- function(cluster, events, profiles, medcolors=mycolors, me
       #axis.title.x=element_blank(),
       #axis.text.x=element_blank(),
       #axis.ticks.x=element_blank(),
-      axis.text.x=element_text(angle=90, vjust=0.5),
+      #axis.text.x=element_text(angle=90, vjust=0.5),
+      axis.text.x=element_blank(),
       axis.title.y=element_blank(),
+      axis.title.x=element_blank(),
       axis.ticks.y=element_blank(),
+      axis.ticks.x=element_blank(),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       panel.background = element_blank(),
@@ -331,11 +342,14 @@ plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
   
   #Get the scores for patients in a cluster
   patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
-  outIDs = which(outcomes[,"id"] %in% patIDs)
-  pat = outcomes[outIDs, ]
-  patients = patIDs
+  #outIDs = which(outcomes[,"id"] %in% patIDs)
+  #pat = outcomes[outIDs, ]
+  pat <- outcomes %>%
+    filter(id %in% patIDs) %>%
+    as.data.frame()
+  #patients = patIDs
   
-  pat$id <- as.character(pat$id)
+  #pat$id <- as.character(pat$id)
   
   
   #Normalize all scores to being at the same day (onset)
@@ -346,16 +360,33 @@ plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
     
   }
   
+  pat <- pat %>%
+    filter(daysSinceOnset <= maxDay)
+  
+  
+  #Calculate direction of trend
+   trend <- lm(formula=get(score)~daysSinceOnset, data=pat)
+   
+   slope = round(trend$coefficients[2], digits=2)
+   
+   if(trend$coefficients[2] >= 0){
+     trend.color <- "#fc8d59" #orange
+  } else{
+     trend.color <- "#91bfdb" #blue
+  }
   
   #Plot heatmap
   gScore <- 
     ggplot(data = pat, aes(x = daysSinceOnset,  y = get(score))) +
     #geom_point(aes(group=id, color=id), size=1)+
     #geom_line(aes(group=id, color=id), size=0.5, linetype="dashed")+
-    #geom_smooth(aes(group=id), color=mycolor, method = "lm", size=1, se=FALSE) +
-    geom_line(aes(group=id), stat="smooth", method = "lm",
-              color = mycolor, size = 1, linetype ="solid", alpha = 0.4) +
-    geom_smooth(method = "loess", size=2, se=FALSE, color="gray50") +
+    #geom_smooth(aes(group=id), color="gray50", method = "lm", size=1, se=FALSE) +
+    #geom_line(aes(group=id), stat="smooth", method = "lm",
+    #          color = "gray50", size = 1, linetype ="solid", alpha = 0.4) +
+    #geom_smooth(method = "loess", size=0.5, se=FALSE, color="gray50") +
+    geom_smooth(method = "lm", size=2, se=FALSE, color=trend.color,
+                na.rm = TRUE, formula=y~x) +
+    #annotate("text", x=500, y=30, label= slope, size=15) +
     scale_y_continuous(limits = c(ylims[1], ylims[2]), 
                        breaks=seq(0, ylims[2], (ylims[2]-ylims[1])/ylims[3]), 
                        expand=c(0,0)) +
@@ -366,7 +397,7 @@ plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
     labs(y=label, 
       x="Time since onset") +
     theme(#Add a title
-      plot.title = element_text(hjust = 0.5, size=15),
+      #plot.title = element_text(hjust = 0.5, size=15),
       #Remove elements
       #legend.position="right", 
       legend.position="none", 
@@ -375,7 +406,7 @@ plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
       #axis.text.x=element_blank(),
       #axis.ticks.x=element_blank(),
       axis.text.x=element_text(angle=90, vjust=0.5),
-      #axis.title.y=element_blank(),
+      axis.title.y=element_blank(),
       #axis.ticks.y=element_blank(),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
@@ -388,7 +419,8 @@ plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
   
   if(title==TRUE){
     gScore = gScore +
-      ggtitle(paste("Cluster", cluster, sep=" "))
+      ggtitle(label)
+      #ggtitle(paste("Cluster", cluster, sep=" "))
   }
   if(xlabel==FALSE){
     gScore = gScore +

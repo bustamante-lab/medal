@@ -78,8 +78,11 @@ outcomes.og <- read_csv(here("../data","outcomes.csv"))
 #Select only rows for the same patients listed in Profiles
 outcomes <- outcomes.og %>%
   filter(id %in% rownames(patients)) %>%
-  select("id", "gi_new", "daysSinceBirth")
+  select("id", "gi_new", "cbiTotal", "daysSinceBirth")
 
+#---
+#Censoring
+years = 2
 
 ```
 
@@ -98,9 +101,20 @@ medgroups <- lst(penicillin = c("penicillin v", "penicillin g", "amoxicillin", "
                 immunoglobulins = c("ivig"),
                 dmard = c("rituximab", "methotrexate", "cellcept"))
 
+medcolors= c("penicillin"="#66c2a5",
+             "cephalosporin" = "#fc8d62",
+             "macrolide" = "#8da0cb",
+             "nsaid" = "#e7298a",
+             "corticosteroid.oral" = "#a6d854",
+             "corticosteroid.iv" = "#ffd92f",
+             "antibody" = "green",
+             "immunoglobulins" = "#e5c494",
+             "dmard" = "#b3b3b3")
+
+
 events <- events.og %>%
   cleanEvents(medgroups) %>%
-  rightCensoring(2)
+  rightCensoring(years)
 
 write_csv(events, here("../data", "data-matrix-clean.csv"))
 
@@ -190,12 +204,20 @@ gpanels
 ```{r, plot-clusters}
 
 k=6
+set.seed(123)
 
 #Colors to be used
-colors.hclust <- c("1"="#a6cee3", "2"="#ff7f00", "3"="#b2df8a", 
-                   "4"="#6a3d9a", "5"="#fcbba1", "6"="#e31a1c")
-colors.kmeans <- c("1"="#fdbf6f", "2"="#1f78b4", "3"="#cab2d6", 
-                   "4"="#33a02c", "5"="#fb9a99", "6"="#b15928")
+#colors.hclust <- c("1"="#a6cee3", "2"="#ff7f00", "3"="#b2df8a", 
+#                   "4"="#6a3d9a", "5"="#fcbba1", "6"="#e31a1c")
+#colors.kmeans <- c("1"="#fdbf6f", "2"="#1f78b4", "3"="#cab2d6", 
+#                   "4"="#33a02c", "5"="#fb9a99", "6"="#b15928")
+
+colors.hclust <- c("1"="#1b9e77", "2"="#7570b3", "3"="#e6ab02", 
+                   "4"="#d95f02", "5"="#a6761d", "6"="#e7298a")
+colors.kmeans <- c("1"="#e6ab02", "2"="#d95f02", "3"="#e7298a", 
+                   "4"="#a6761d", "5"="#7570b3", "6"="#1b9e77")
+
+
 
 
 #Plot Clustering strategies
@@ -283,7 +305,7 @@ gpanels <- ggarrange(gHeatMap,
                      align = "hv",
                      ncol = 1, nrow=2)
 
-ggexport(gpanels, filename=here("images", "Figure2-heatmap-mds.png"), height = 5000, width = 4000, res=300)
+ggexport(gpanels, filename=here("images", "Figure2-heatmap-mds.png"), height = 4000, width = 3000, res=300)
 
 ```
 
@@ -361,10 +383,17 @@ ggexport(gpanel, filename=here("images", "Figure3-metrics.png"), height = 3600, 
 
 
 #Saving the cluster to profiles
-assignment <- cutree(dend,k)
+assignment <- hclust_annot
+assignment <- kmeans_annot
 #index = which(profiles$id %in% names(assignment))
 #write.csv(cbind(profiles[index,], cluster=assignment),
 #          "../data/data-matrix-profiles-cluster.csv")
+
+profiles <- patients %>%
+  rownames_to_column(var="id") %>%
+  filter(id %in% rownames(assignment)) %>%
+  mutate(cluster=unlist(assignment))
+
 ```
 
 \ 
@@ -374,7 +403,47 @@ assignment <- cutree(dend,k)
 
 ```{r, evaluate-cluster}
 
-# TBD
+source(here("programs", "fun-plot.R"))
+
+#Get all paths
+gPath1 <- plotTimeSeriesDrug(1, events, profiles, medcolors, medgroups, years)
+gPath2 <- plotTimeSeriesDrug(2, events, profiles, medcolors, medgroups, years)
+gPath3 <- plotTimeSeriesDrug(3, events, profiles, medcolors, medgroups, years)
+gPath4 <- plotTimeSeriesDrug(4, events, profiles, medcolors, medgroups, years)
+gPath5 <- plotTimeSeriesDrug(5, events, profiles, medcolors, medgroups, years)
+gPath6 <- plotTimeSeriesDrug(6, events, profiles, medcolors, medgroups, years)
+
+
+
+#Get all impairment scores
+gGIS1 <- plotScores(1, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+gGIS2 <- plotScores(2, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+gGIS3 <- plotScores(3, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+gGIS4 <- plotScores(4, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+gGIS5 <- plotScores(5, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+gGIS6 <- plotScores(6, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+   
+gcbi1 <- plotScores(1, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+gcbi2 <- plotScores(2, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+gcbi3 <- plotScores(3, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+gcbi4 <- plotScores(4, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+gcbi5 <- plotScores(5, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+gcbi6 <- plotScores(6, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+
+
+
+#Save plot
+gpanels <- ggarrange(gPath1, gPath2, gPath3, gPath4, gPath5, gPath6,
+                     gGIS1, gGIS2, gGIS3, gGIS4, gGIS5, gGIS6,
+                     gcbi1, gcbi2, gcbi3, gcbi4, gcbi5, gcbi6,
+                     #labels = c("Clus1", "Clus2", "Clus3", "Clus4", "Clus5", "Clus6"),
+                     heights = c(6,1,1),
+                     align = "hv",
+                     ncol = 6, nrow = 3, legend="none", common.legend = FALSE)
+ggexport(gpanels, filename=here("images", "Figure3-clusters.png"),
+         height = 4000, width = 5000, res=300)
+
+
 
 ```
 

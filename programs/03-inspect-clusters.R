@@ -88,6 +88,7 @@ medcolors= c("penicillin"="#66c2a5",
              "nsaid" = "#e7298a",
              "corticosteroid.oral" = "#a6d854",
              "corticosteroid.iv" = "#ffd92f",
+             "antibody" = "green",
              "immunoglobulins" = "#e5c494",
              "dmard" = "#b3b3b3")
 
