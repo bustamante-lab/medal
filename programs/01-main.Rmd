@@ -146,7 +146,7 @@ rownames(distMatrix) = pID
 
 \  
 
-# Step 4 Choose number of clusters
+# Step 4. Choose number of clusters
 
 ```{r, num-clusters}
 
@@ -189,7 +189,7 @@ numKPanels <- ggarrange(elbow, silhouette, gapStat, clest,
                      labels = c("A", "B", "C", "D"),
                      ncol = 2, nrow = 2, legend="bottom", 
                      align="v", common.legend = FALSE)
-ggexport(numKPanels, filename=here("images", "Figure1-num-clusters.png"), height = 2500, width = 3000, res=300)
+ggexport(numKPanels, filename=here("images", "Figure4-b-num-clusters.png"), height = 2500, width = 3000, res=300)
 
 gpanels
 
@@ -251,7 +251,7 @@ gpanels <- ggarrange(gDend,
                      labels = c("A"),
                      align = "h",
                      legend="bottom", common.legend = TRUE)
-ggexport(gpanels, filename=here("images", "Figure2-a-dendro-mds.png"), height = 4000, width = 4000, res=300)
+ggexport(gpanels, filename=here("images", "Figure5-a-dendro-mds.png"), height = 4000, width = 4000, res=300)
 
 #gpanels
 
@@ -266,7 +266,7 @@ gpanels <- ggarrange(ggarrange(gMDSkmeans12, gTSNEkmeans,
                      labels = c("A", "B"),
                      align = "h",
                      legend="bottom", common.legend = FALSE)
-ggexport(gpanels, filename=here("images", "Figure2-b-dendro-mds.png"), height = 4000, width = 4000, res=300)
+ggexport(gpanels, filename=here("images", "Figure5-b-dendro-mds.png"), height = 4000, width = 4000, res=300)
 
 
 kmeans_annot <- as.data.frame(kmeans["cluster"]) %>%
@@ -305,7 +305,7 @@ gpanels <- ggarrange(gHeatMap,
                      align = "hv",
                      ncol = 1, nrow=2)
 
-ggexport(gpanels, filename=here("images", "Figure2-heatmap-mds.png"), height = 4000, width = 3000, res=300)
+ggexport(gpanels, filename=here("images", "Figure5-heatmap-mds.png"), height = 4000, width = 3000, res=300)
 
 ```
 
@@ -370,7 +370,7 @@ gpanel <- ggarrange(numKPanels, clus.test,
                      align = "h",
                      ncol = 1, nrow=2)
 
-ggexport(gpanel, filename=here("images", "Figure3-metrics.png"), height = 3600, width = 2000, res=300)
+ggexport(gpanel, filename=here("images", "Figure4-metrics.png"), height = 3600, width = 2000, res=300)
 
 
 ```
@@ -398,12 +398,9 @@ profiles <- patients %>%
 
 \ 
 
-
 # Step 8. Evaluate clusters
 
 ```{r, evaluate-cluster}
-
-source(here("programs", "fun-plot.R"))
 
 #Get all paths
 gPath1 <- plotTimeSeriesDrug(1, events, profiles, medcolors, medgroups, years)
@@ -440,7 +437,7 @@ gpanels <- ggarrange(gPath1, gPath2, gPath3, gPath4, gPath5, gPath6,
                      heights = c(6,1,1),
                      align = "hv",
                      ncol = 6, nrow = 3, legend="none", common.legend = FALSE)
-ggexport(gpanels, filename=here("images", "Figure3-clusters.png"),
+ggexport(gpanels, filename=here("images", "Figure6-clusters.png"),
          height = 4000, width = 5000, res=300)
 
 
@@ -448,3 +445,33 @@ ggexport(gpanels, filename=here("images", "Figure3-clusters.png"),
 ```
 
 \ 
+
+# Step 9. ANOVA
+
+```{r, anova}
+
+#Get profiles for patients in each cluster
+pat1 <- getClusterScores(profiles, 1, outcomes, maxDay) %>% mutate(cluster=1)
+pat2 <- getClusterScores(profiles, 2, outcomes, maxDay) %>% mutate(cluster=2)
+pat3 <- getClusterScores(profiles, 3, outcomes, maxDay) %>% mutate(cluster=3)
+pat4 <- getClusterScores(profiles, 4, outcomes, maxDay) %>% mutate(cluster=4)
+pat5 <- getClusterScores(profiles, 5, outcomes, maxDay) %>% mutate(cluster=5)
+pat6 <- getClusterScores(profiles, 6, outcomes, maxDay) %>% mutate(cluster=6)
+
+pat <- pat1 %>%
+  bind_rows(pat2) %>%
+  bind_rows(pat3) %>%
+  bind_rows(pat4) %>%
+  bind_rows(pat5) %>%
+  bind_rows(pat6)
+
+
+## Global Impairment Score
+fit1 <- lm(formula=gi_new+cluster~daysSinceOnset, data=pat)
+
+anova(fit1, fit1)
+
+
+```
+
+

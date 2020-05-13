@@ -335,11 +335,7 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications, year
 }
 
 
-plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
-                       profiles, years, mycolor="gray50", label="Score",
-                       title=TRUE, xlabel=TRUE){
-  maxDay = years*365
-  
+getClusterScores <- function(profiles, cluster, outcomes, maxDay){
   #Get the scores for patients in a cluster
   patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
   #outIDs = which(outcomes[,"id"] %in% patIDs)
@@ -362,6 +358,17 @@ plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
   
   pat <- pat %>%
     filter(daysSinceOnset <= maxDay)
+  
+  return(pat)
+  
+}
+
+plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
+                       profiles, years, mycolor="gray50", label="Score",
+                       title=TRUE, xlabel=TRUE){
+  maxDay = years*365
+  
+  pat <- getClusterScores(profiles, cluster, outcomes, maxDay)
   
   
   #Calculate direction of trend
