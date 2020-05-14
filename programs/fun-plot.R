@@ -335,7 +335,10 @@ plotCoOcurrenceTriangle <- function(cluster, events, profiles, medications, year
 }
 
 
-getClusterScores <- function(profiles, cluster, outcomes, maxDay){
+getClusterScores <- function(profiles, cluster, outcomes, years){
+  
+  maxDay = years*365
+  
   #Get the scores for patients in a cluster
   patIDs = profiles[which(profiles[,"cluster"] == cluster), "id"]
   #outIDs = which(outcomes[,"id"] %in% patIDs)

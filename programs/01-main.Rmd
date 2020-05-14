@@ -38,6 +38,10 @@ library(NMF) #for cluster purity and entropy
 #Heatmap
 library("pheatmap")
 
+#ANOVA
+library(lme4)
+library(lmerTest)
+
 #Additional functions
 #source(here("programs", "fun-medal.R")) #PyMedal is used instead
 source(here("programs", "fun-support.R"))
@@ -191,8 +195,7 @@ numKPanels <- ggarrange(elbow, silhouette, gapStat, clest,
                      align="v", common.legend = FALSE)
 ggexport(numKPanels, filename=here("images", "Figure4-b-num-clusters.png"), height = 2500, width = 3000, res=300)
 
-gpanels
-
+numKPanels
 
 
 ```
@@ -307,6 +310,8 @@ gpanels <- ggarrange(gHeatMap,
 
 ggexport(gpanels, filename=here("images", "Figure5-heatmap-mds.png"), height = 4000, width = 3000, res=300)
 
+gpanels
+
 ```
 
 \ 
@@ -372,6 +377,8 @@ gpanel <- ggarrange(numKPanels, clus.test,
 
 ggexport(gpanel, filename=here("images", "Figure4-metrics.png"), height = 3600, width = 2000, res=300)
 
+gpanel
+
 
 ```
 
@@ -384,10 +391,13 @@ ggexport(gpanel, filename=here("images", "Figure4-metrics.png"), height = 3600, 
 
 #Saving the cluster to profiles
 assignment <- hclust_annot
-assignment <- kmeans_annot
-#index = which(profiles$id %in% names(assignment))
-#write.csv(cbind(profiles[index,], cluster=assignment),
-#          "../data/data-matrix-profiles-cluster.csv")
+assignment <- kmeans_annot 
+
+out <- assignment %>%
+  rename(cluster=kmeans) %>%
+  rownames_to_column(var="id")
+
+write.csv(out,here("dataExample", "cluster-assignment.csv"))
 
 profiles <- patients %>%
   rownames_to_column(var="id") %>%
@@ -451,12 +461,12 @@ ggexport(gpanels, filename=here("images", "Figure6-clusters.png"),
 ```{r, anova}
 
 #Get profiles for patients in each cluster
-pat1 <- getClusterScores(profiles, 1, outcomes, maxDay) %>% mutate(cluster=1)
-pat2 <- getClusterScores(profiles, 2, outcomes, maxDay) %>% mutate(cluster=2)
-pat3 <- getClusterScores(profiles, 3, outcomes, maxDay) %>% mutate(cluster=3)
-pat4 <- getClusterScores(profiles, 4, outcomes, maxDay) %>% mutate(cluster=4)
-pat5 <- getClusterScores(profiles, 5, outcomes, maxDay) %>% mutate(cluster=5)
-pat6 <- getClusterScores(profiles, 6, outcomes, maxDay) %>% mutate(cluster=6)
+pat1 <- getClusterScores(profiles, 1, outcomes, years) %>% mutate(cluster="1")
+pat2 <- getClusterScores(profiles, 2, outcomes, years) %>% mutate(cluster="2")
+pat3 <- getClusterScores(profiles, 3, outcomes, years) %>% mutate(cluster="3")
+pat4 <- getClusterScores(profiles, 4, outcomes, years) %>% mutate(cluster="4")
+pat5 <- getClusterScores(profiles, 5, outcomes, years) %>% mutate(cluster="5")
+pat6 <- getClusterScores(profiles, 6, outcomes, years) %>% mutate(cluster="6")
 
 pat <- pat1 %>%
   bind_rows(pat2) %>%
@@ -465,11 +475,75 @@ pat <- pat1 %>%
   bind_rows(pat5) %>%
   bind_rows(pat6)
 
+pat <- pat %>%
+  mutate(one = case_when(cluster == 1 ~ 1, TRUE ~ 0)) %>%
+  mutate(two = case_when(cluster == 2 ~ 1, TRUE ~ 0)) %>%
+  mutate(three = case_when(cluster == 3 ~ 1, TRUE ~ 0)) %>%
+  mutate(four = case_when(cluster == 4 ~ 1, TRUE ~ 0)) %>%
+  mutate(five = case_when(cluster == 5 ~ 1, TRUE ~ 0)) %>%
+  mutate(six = case_when(cluster == 6 ~ 1, TRUE ~ 0))
 
-## Global Impairment Score
-fit1 <- lm(formula=gi_new+cluster~daysSinceOnset, data=pat)
+#Convert days to years
+pat <- pat %>%
+  mutate(years=daysSinceOnset/365)
 
-anova(fit1, fit1)
+#Plot the scores
+gi_new <- ggplot(pat)+
+  geom_smooth(aes(x=years, y=gi_new, group=cluster, col=cluster),
+              method = "lm", size=2, se=FALSE, na.rm = TRUE, formula=y~x) +
+  scale_color_manual(values = colors.kmeans) +
+  theme_light()+
+  ggtitle("Global Impairment Score by cluster")
+
+cbiTotal <- ggplot(pat)+
+  geom_smooth(aes(x=years, y=cbiTotal, group=cluster, col=cluster),
+              method = "lm", size=2, se=FALSE, na.rm = TRUE, formula=y~x) +
+  scale_color_manual(values = colors.kmeans) +
+  theme_light()+
+  ggtitle("Caregiver Burden by cluster")
+
+gpanels <- ggarrange(gi_new, cbiTotal,
+                     align = "hv",
+                     ncol = 2, nrow = 1, legend="bottom", common.legend = TRUE)
+ggexport(gpanels, filename=here("images", "Figure7-scores.png"),
+         height = 1500, width = 3000, res=300)
+
+gpanels
+
+
+
+## Obtain summaries
+summary(lmer(gi_new ~ cluster*years + (years | id), data = pat, REML = F))
+summary(lmer(gi_new ~ years + (years | id), 
+             data = pat %>% filter(one==1), REML = F))$coefficients
+summary(lmer(gi_new ~ years + (years | id), 
+             data = pat %>% filter(two==1), REML = F))$coefficients
+summary(lmer(gi_new ~ years + (years | id), 
+             data = pat %>% filter(three==1), REML = F))$coefficients
+summary(lmer(gi_new ~ years + (years | id), 
+             data = pat %>% filter(four==1), REML = F))$coefficients
+summary(lmer(gi_new ~ years + (years | id), 
+             data = pat %>% filter(five==1), REML = F))$coefficients
+summary(lmer(gi_new ~ years + (years | id), 
+             data = pat %>% filter(six==1), REML = F))$coefficients
+
+summary(lmer(cbiTotal ~ cluster*years + (years | id), data = pat, REML = F))
+summary(lmer(cbiTotal ~ years + (years | id), 
+             data = pat %>% filter(one==1), REML = F))$coefficients
+summary(lmer(cbiTotal ~ years + (years | id), 
+             data = pat %>% filter(two==1), REML = F))$coefficients
+summary(lmer(cbiTotal ~ years + (years | id), 
+             data = pat %>% filter(three==1), REML = F))$coefficients
+summary(lmer(cbiTotal ~ years + (years | id), 
+             data = pat %>% filter(four==1), REML = F))$coefficients
+summary(lmer(cbiTotal ~ years + (years | id), 
+             data = pat %>% filter(five==1), REML = F))$coefficients
+summary(lmer(cbiTotal ~ years + (years | id), 
+             data = pat %>% filter(six==1), REML = F))$coefficients
+
+summary(aov(gi_new ~ cluster * years + Error(id), data = pat))
+
+summary(aov(cbiTotal ~ cluster * years + Error(id), data = pat))
 
 
 ```
