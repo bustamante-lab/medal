@@ -450,7 +450,7 @@ gpanels <- ggarrange(gPath1, gPath2, gPath3, gPath4, gPath5, gPath6,
 ggexport(gpanels, filename=here("images", "Figure6-clusters.png"),
          height = 4000, width = 5000, res=300)
 
-
+gpanels
 
 ```
 

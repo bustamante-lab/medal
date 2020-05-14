@@ -734,6 +734,12 @@ ggexport(gpanels, filename=here("images", "Figure6-clusters.png"),
 
     ## file saved to /Users/lopezpia/Documents/GitHub/medal/images/Figure6-clusters.png
 
+``` r
+gpanels
+```
+
+![](01-main_files/figure-gfm/evaluate-cluster-1.png)<!-- -->
+
  
 
 # Step 9. ANOVA
