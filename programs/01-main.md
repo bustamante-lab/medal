@@ -1,7 +1,7 @@
 Medication Alignment Algorithm (Medal)
 ================
 Arturo Lopez Pineda
-2020-05-14
+2020-05-17
 
 # Step 0. Load required libraries
 
@@ -678,20 +678,66 @@ gPath6 <- plotTimeSeriesDrug(6, events, profiles, medcolors, medgroups, years)
 #Get all impairment scores
 gGIS1 <- plotScores(1, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
 gGIS2 <- plotScores(2, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+```
+
+    ## boundary (singular) fit: see ?isSingular
+
+``` r
 gGIS3 <- plotScores(3, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+```
+
+    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
+    ## Model failed to converge with max|grad| = 0.00663392 (tol = 0.002, component 1)
+
+``` r
 gGIS4 <- plotScores(4, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
 gGIS5 <- plotScores(5, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
+```
+
+    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
+    ## Model failed to converge with max|grad| = 0.00342864 (tol = 0.002, component 1)
+
+``` r
 gGIS6 <- plotScores(6, outcomes, "gi_new", c(0,100,5), profiles, 2, "gray50", "Global Impairment", TRUE, FALSE)
-   
+```
+
+    ## boundary (singular) fit: see ?isSingular
+
+``` r
 gcbi1 <- plotScores(1, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+```
+
+    ## boundary (singular) fit: see ?isSingular
+
+``` r
 gcbi2 <- plotScores(2, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
 gcbi3 <- plotScores(3, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+```
+
+    ## boundary (singular) fit: see ?isSingular
+
+``` r
 gcbi4 <- plotScores(4, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+```
+
+    ## boundary (singular) fit: see ?isSingular
+
+``` r
 gcbi5 <- plotScores(5, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+```
+
+    ## boundary (singular) fit: see ?isSingular
+
+    ## Warning: Model failed to converge with 1 negative eigenvalue: -4.0e+00
+
+``` r
 gcbi6 <- plotScores(6, outcomes, "cbiTotal", c(0,96,4), profiles, 2, "gray50", "Caregiver Burden", TRUE, TRUE)
+```
 
+    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
+    ## Model failed to converge with max|grad| = 0.00440242 (tol = 0.002, component 1)
 
-
+``` r
 #Save plot
 gpanels <- ggarrange(gPath1, gPath2, gPath3, gPath4, gPath5, gPath6,
                      gGIS1, gGIS2, gGIS3, gGIS4, gGIS5, gGIS6,
@@ -724,6 +770,30 @@ gpanels <- ggarrange(gPath1, gPath2, gPath3, gPath4, gPath5, gPath6,
 
     ## Warning: Removed 10 row(s) containing missing values (geom_path).
 
+    ## Warning: Removed 27 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 27 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 27 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 27 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 27 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 27 row(s) containing missing values (geom_path).
+
+    ## Warning: Removed 187 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 187 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 187 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 187 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 187 row(s) containing missing values (geom_path).
+    
+    ## Warning: Removed 187 row(s) containing missing values (geom_path).
+
     ## Warning: Graphs cannot be horizontally aligned unless the axis parameter is set.
     ## Placing graphs unaligned.
 
@@ -745,32 +815,7 @@ gpanels
 # Step 9. ANOVA
 
 ``` r
-#Get profiles for patients in each cluster
-pat1 <- getClusterScores(profiles, 1, outcomes, years) %>% mutate(cluster="1")
-pat2 <- getClusterScores(profiles, 2, outcomes, years) %>% mutate(cluster="2")
-pat3 <- getClusterScores(profiles, 3, outcomes, years) %>% mutate(cluster="3")
-pat4 <- getClusterScores(profiles, 4, outcomes, years) %>% mutate(cluster="4")
-pat5 <- getClusterScores(profiles, 5, outcomes, years) %>% mutate(cluster="5")
-pat6 <- getClusterScores(profiles, 6, outcomes, years) %>% mutate(cluster="6")
-
-pat <- pat1 %>%
-  bind_rows(pat2) %>%
-  bind_rows(pat3) %>%
-  bind_rows(pat4) %>%
-  bind_rows(pat5) %>%
-  bind_rows(pat6)
-
-pat <- pat %>%
-  mutate(one = case_when(cluster == 1 ~ 1, TRUE ~ 0)) %>%
-  mutate(two = case_when(cluster == 2 ~ 1, TRUE ~ 0)) %>%
-  mutate(three = case_when(cluster == 3 ~ 1, TRUE ~ 0)) %>%
-  mutate(four = case_when(cluster == 4 ~ 1, TRUE ~ 0)) %>%
-  mutate(five = case_when(cluster == 5 ~ 1, TRUE ~ 0)) %>%
-  mutate(six = case_when(cluster == 6 ~ 1, TRUE ~ 0))
-
-#Convert days to years
-pat <- pat %>%
-  mutate(years=daysSinceOnset/365)
+pat <- getClusterProfiles(profiles, outcomes, years)
 
 #Plot the scores
 gi_new <- ggplot(pat)+
@@ -804,250 +849,87 @@ gpanels
 
 ``` r
 ## Obtain summaries
-summary(lmer(gi_new ~ cluster*years + (years | id), data = pat, REML = F))
-```
-
-    ## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite's
-    ##   method [lmerModLmerTest]
-    ## Formula: gi_new ~ cluster * years + (years | id)
-    ##    Data: pat
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##   4468.0   4536.1  -2218.0   4436.0      505 
-    ## 
-    ## Scaled residuals: 
-    ##     Min      1Q  Median      3Q     Max 
-    ## -2.5921 -0.6057 -0.0361  0.5457  3.6545 
-    ## 
-    ## Random effects:
-    ##  Groups   Name        Variance Std.Dev. Corr 
-    ##  id       (Intercept) 539.0    23.22         
-    ##           years       129.7    11.39    -0.72
-    ##  Residual             219.4    14.81         
-    ## Number of obs: 521, groups:  id, 41
-    ## 
-    ## Fixed effects:
-    ##                Estimate Std. Error       df t value Pr(>|t|)   
-    ## (Intercept)     33.1158    10.3135  42.0519   3.211  0.00254 **
-    ## cluster2         5.1318    14.4075  40.1727   0.356  0.72356   
-    ## cluster3        -4.1931    14.5985  42.2423  -0.287  0.77534   
-    ## cluster4         6.4408    12.5250  40.7893   0.514  0.60986   
-    ## cluster5         0.3012    14.5099  41.2740   0.021  0.98354   
-    ## cluster6        24.8156    15.1526  40.8552   1.638  0.10916   
-    ## years           -7.6932     5.9408  22.0965  -1.295  0.20869   
-    ## cluster2:years  11.6572     8.2249  21.5192   1.417  0.17071   
-    ## cluster3:years -13.6344    10.2222  42.3958  -1.334  0.18939   
-    ## cluster4:years   0.2758     7.6187  25.0256   0.036  0.97141   
-    ## cluster5:years -10.8159     8.6316  25.0612  -1.253  0.22175   
-    ## cluster6:years  -4.8081     8.6326  21.9096  -0.557  0.58319   
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Correlation of Fixed Effects:
-    ##             (Intr) clstr2 clstr3 clstr4 clstr5 clstr6 years  clst2: clst3:
-    ## cluster2    -0.716                                                        
-    ## cluster3    -0.706  0.506                                                 
-    ## cluster4    -0.823  0.589  0.582                                          
-    ## cluster5    -0.711  0.509  0.502  0.585                                   
-    ## cluster6    -0.681  0.487  0.481  0.560  0.484                            
-    ## years       -0.718  0.514  0.507  0.591  0.510  0.489                     
-    ## clustr2:yrs  0.518 -0.719 -0.366 -0.427 -0.369 -0.353 -0.722              
-    ## clustr3:yrs  0.417 -0.299 -0.655 -0.343 -0.297 -0.284 -0.581  0.420       
-    ## clustr4:yrs  0.560 -0.401 -0.395 -0.698 -0.398 -0.381 -0.780  0.563  0.453
-    ## clustr5:yrs  0.494 -0.354 -0.349 -0.407 -0.703 -0.336 -0.688  0.497  0.400
-    ## clustr6:yrs  0.494 -0.354 -0.349 -0.407 -0.351 -0.717 -0.688  0.497  0.400
-    ##             clst4: clst5:
-    ## cluster2                 
-    ## cluster3                 
-    ## cluster4                 
-    ## cluster5                 
-    ## cluster6                 
-    ## years                    
-    ## clustr2:yrs              
-    ## clustr3:yrs              
-    ## clustr4:yrs              
-    ## clustr5:yrs  0.537       
-    ## clustr6:yrs  0.537  0.474
-
-``` r
-summary(lmer(gi_new ~ years + (years | id), 
-             data = pat %>% filter(one==1), REML = F))$coefficients
-```
-
-    ##              Estimate Std. Error       df   t value   Pr(>|t|)
-    ## (Intercept) 33.232018  10.309727 5.852491  3.223366 0.01870295
-    ## years       -8.317455   5.876922 4.417811 -1.415274 0.22345300
-
-``` r
-summary(lmer(gi_new ~ years + (years | id), 
-             data = pat %>% filter(two==1), REML = F))$coefficients
+#summary(lmer(gi_new ~ cluster*years + (years | id), data = pat, REML = F))
+mod1 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(one==1), REML = F))$coefficients
+mod2 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(two==1), REML = F))$coefficients
 ```
 
     ## boundary (singular) fit: see ?isSingular
 
-    ##              Estimate Std. Error        df  t value     Pr(>|t|)
-    ## (Intercept) 38.561533   4.751049  7.368225 8.116424 6.265316e-05
-    ## years        3.801834   2.653336 74.634328 1.432850 1.560762e-01
-
 ``` r
-summary(lmer(gi_new ~ years + (years | id), 
-             data = pat %>% filter(three==1), REML = F))$coefficients
+mod3 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(three==1), REML = F))$coefficients
 ```
 
     ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
     ## Model failed to converge with max|grad| = 0.00663392 (tol = 0.002, component 1)
 
-    ##              Estimate Std. Error        df   t value     Pr(>|t|)
-    ## (Intercept)  28.30487   5.861777  6.258895  4.828719 0.0025949492
-    ## years       -19.74025   4.304396 20.003106 -4.586066 0.0001789895
-
 ``` r
-summary(lmer(gi_new ~ years + (years | id), 
-             data = pat %>% filter(four==1), REML = F))$coefficients
-```
-
-    ##              Estimate Std. Error        df   t value     Pr(>|t|)
-    ## (Intercept) 39.733383   8.786994 11.721029  4.521840 0.0007417537
-    ## years       -7.611023   5.904678  7.207885 -1.288982 0.2372285549
-
-``` r
-summary(lmer(gi_new ~ years + (years | id), 
-             data = pat %>% filter(five==1), REML = F))$coefficients
+mod4 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(four==1), REML = F))$coefficients
+mod5 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(five==1), REML = F))$coefficients
 ```
 
     ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
     ## Model failed to converge with max|grad| = 0.00342864 (tol = 0.002, component 1)
 
-    ##              Estimate Std. Error       df   t value  Pr(>|t|)
-    ## (Intercept)  32.77219  11.534359 5.485370  2.841267 0.0326025
-    ## years       -16.66927   8.523312 5.147064 -1.955727 0.1062343
-
 ``` r
-summary(lmer(gi_new ~ years + (years | id), 
-             data = pat %>% filter(six==1), REML = F))$coefficients
+mod6 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(six==1), REML = F))$coefficients
 ```
 
     ## boundary (singular) fit: see ?isSingular
 
-    ##              Estimate Std. Error        df   t value     Pr(>|t|)
-    ## (Intercept)  58.86449  13.093115  5.013105  4.495836 0.0063838859
-    ## years       -15.13776   3.249871 11.938430 -4.657957 0.0005603785
-
 ``` r
-summary(lmer(cbiTotal ~ cluster*years + (years | id), data = pat, REML = F))
+intercept <- c(mod1[1], mod2[1], mod3[1], mod4[1], mod5[1], mod6[1])
+slope <- c(mod1[2], mod2[2], mod3[2], mod4[2], mod5[2], mod6[2])
+sderrors <- c(mod1[4], mod2[4], mod3[4], mod4[4], mod5[4], mod6[4])
+pvalues <- c(mod1[10], mod2[10], mod3[10], mod4[10], mod5[10], mod6[10])
+
+#Print table
+as.data.frame(cbind(cluster=c(1:k), intercept, slope, sderrors, pvalues)) %>%
+  round(digits=2) %>%
+  kable()
 ```
 
-    ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
-    ## Model failed to converge with max|grad| = 0.00345686 (tol = 0.002, component 1)
-
-    ## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite's
-    ##   method [lmerModLmerTest]
-    ## Formula: cbiTotal ~ cluster * years + (years | id)
-    ##    Data: pat
-    ## 
-    ##      AIC      BIC   logLik deviance df.resid 
-    ##   2017.8   2074.5   -992.9   1985.8      239 
-    ## 
-    ## Scaled residuals: 
-    ##     Min      1Q  Median      3Q     Max 
-    ## -2.1863 -0.5614 -0.0737  0.4785  3.7029 
-    ## 
-    ## Random effects:
-    ##  Groups   Name        Variance Std.Dev. Corr
-    ##  id       (Intercept) 222.39   14.913       
-    ##           years        14.49    3.807   0.25
-    ##  Residual              94.07    9.699       
-    ## Number of obs: 255, groups:  id, 36
-    ## 
-    ## Fixed effects:
-    ##                Estimate Std. Error      df t value Pr(>|t|)    
-    ## (Intercept)      25.980      6.967  34.956   3.729 0.000679 ***
-    ## cluster2          7.269      9.699  34.353   0.749 0.458692    
-    ## cluster3         -1.371     11.267  40.685  -0.122 0.903726    
-    ## cluster4         13.870      8.714  36.095   1.592 0.120195    
-    ## cluster5         -9.131     10.711  33.136  -0.853 0.400032    
-    ## cluster6         10.286     10.132  34.236   1.015 0.317126    
-    ## years            -3.202      3.496   9.430  -0.916 0.382585    
-    ## cluster2:years    4.218      4.995  12.143   0.845 0.414713    
-    ## cluster3:years  -14.353     11.168 162.712  -1.285 0.200532    
-    ## cluster4:years   -9.457      4.903  10.063  -1.929 0.082435 .  
-    ## cluster5:years   -1.545      5.521  13.532  -0.280 0.783823    
-    ## cluster6:years    1.094      4.783  10.779   0.229 0.823320    
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-    ## 
-    ## Correlation of Fixed Effects:
-    ##             (Intr) clstr2 clstr3 clstr4 clstr5 clstr6 years  clst2: clst3:
-    ## cluster2    -0.718                                                        
-    ## cluster3    -0.618  0.444                                                 
-    ## cluster4    -0.799  0.574  0.494                                          
-    ## cluster5    -0.650  0.467  0.402  0.520                                   
-    ## cluster6    -0.688  0.494  0.425  0.550  0.447                            
-    ## years       -0.239  0.172  0.148  0.191  0.156  0.165                     
-    ## clustr2:yrs  0.167 -0.222 -0.104 -0.134 -0.109 -0.115 -0.700              
-    ## clustr3:yrs  0.075 -0.054 -0.359 -0.060 -0.049 -0.052 -0.313  0.219       
-    ## clustr4:yrs  0.171 -0.123 -0.105 -0.245 -0.111 -0.117 -0.713  0.499  0.223
-    ## clustr5:yrs  0.152 -0.109 -0.094 -0.121 -0.210 -0.104 -0.633  0.443  0.198
-    ## clustr6:yrs  0.175 -0.126 -0.108 -0.140 -0.114 -0.213 -0.731  0.512  0.229
-    ##             clst4: clst5:
-    ## cluster2                 
-    ## cluster3                 
-    ## cluster4                 
-    ## cluster5                 
-    ## cluster6                 
-    ## years                    
-    ## clustr2:yrs              
-    ## clustr3:yrs              
-    ## clustr4:yrs              
-    ## clustr5:yrs  0.452       
-    ## clustr6:yrs  0.521  0.463
-    ## convergence code: 0
-    ## Model failed to converge with max|grad| = 0.00345686 (tol = 0.002, component 1)
+| cluster | intercept |   slope | sderrors | pvalues |
+| ------: | --------: | ------: | -------: | ------: |
+|       1 |     33.23 |  \-8.32 |     5.88 |    0.22 |
+|       2 |     38.56 |    3.80 |     2.65 |    0.16 |
+|       3 |     28.30 | \-19.74 |     4.30 |    0.00 |
+|       4 |     39.73 |  \-7.61 |     5.90 |    0.24 |
+|       5 |     32.77 | \-16.67 |     8.52 |    0.11 |
+|       6 |     58.86 | \-15.14 |     3.25 |    0.00 |
 
 ``` r
-summary(lmer(cbiTotal ~ years + (years | id), 
+#summary(lmer(cbiTotal ~ cluster*years + (years | id), data = pat, REML = F))
+mod1 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(one==1), REML = F))$coefficients
 ```
 
     ## boundary (singular) fit: see ?isSingular
 
-    ##              Estimate Std. Error       df    t value    Pr(>|t|)
-    ## (Intercept) 25.792299   5.824493 5.886319  4.4282476 0.004639966
-    ## years       -3.203289   4.165912 9.995665 -0.7689285 0.459718480
-
 ``` r
-summary(lmer(cbiTotal ~ years + (years | id), 
+mod2 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(two==1), REML = F))$coefficients
-```
-
-    ##              Estimate Std. Error       df   t value    Pr(>|t|)
-    ## (Intercept) 32.592183   6.416964 6.287147 5.0790659 0.001975285
-    ## years        2.171493   5.049118 5.255525 0.4300738 0.684209342
-
-``` r
-summary(lmer(cbiTotal ~ years + (years | id), 
+mo3 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(three==1), REML = F))$coefficients
 ```
 
     ## boundary (singular) fit: see ?isSingular
 
-    ##              Estimate Std. Error        df   t value    Pr(>|t|)
-    ## (Intercept)  25.12319   6.658568  3.810596  3.773062 0.021346760
-    ## years       -20.09366   5.545437 13.425377 -3.623459 0.002944212
-
 ``` r
-summary(lmer(cbiTotal ~ years + (years | id), 
+mod4 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(four==1), REML = F))$coefficients
 ```
 
     ## boundary (singular) fit: see ?isSingular
 
-    ##              Estimate Std. Error       df   t value     Pr(>|t|)
-    ## (Intercept)  39.47174   5.781494 10.96931  6.827256 2.889161e-05
-    ## years       -11.90322   3.132077 36.75828 -3.800425 5.257892e-04
-
 ``` r
-summary(lmer(cbiTotal ~ years + (years | id), 
+mod5 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(five==1), REML = F))$coefficients
 ```
 
@@ -1055,21 +937,34 @@ summary(lmer(cbiTotal ~ years + (years | id),
 
     ## Warning: Model failed to converge with 1 negative eigenvalue: -4.0e+00
 
-    ##              Estimate Std. Error df   t value     Pr(>|t|)
-    ## (Intercept) 18.702558   3.130472 32  5.974358 1.169069e-06
-    ## years       -5.788748   3.559149 32 -1.626442 1.136648e-01
-
 ``` r
-summary(lmer(cbiTotal ~ years + (years | id), 
+mod6 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(six==1), REML = F))$coefficients
 ```
 
     ## Warning in checkConv(attr(opt, "derivs"), opt$par, ctrl = control$checkConv, :
     ## Model failed to converge with max|grad| = 0.00440242 (tol = 0.002, component 1)
 
-    ##             Estimate Std. Error        df   t value   Pr(>|t|)
-    ## (Intercept) 37.34323  10.787126  4.964901  3.461833 0.01821216
-    ## years       -2.69536   1.937408 33.589539 -1.391219 0.17330593
+``` r
+intercept <- c(mod1[1], mod2[1], mod3[1], mod4[1], mod5[1], mod6[1])
+slope <- c(mod1[2], mod2[2], mod3[2], mod4[2], mod5[2], mod6[2])
+sderrors <- c(mod1[4], mod2[4], mod3[4], mod4[4], mod5[4], mod6[4])
+pvalues <- c(mod1[10], mod2[10], mod3[10], mod4[10], mod5[10], mod6[10])
+
+#Print table
+as.data.frame(cbind(cluster=c(1:k), intercept, slope, sderrors, pvalues)) %>%
+  round(digits=2) %>%
+  kable()
+```
+
+| cluster | intercept |   slope | sderrors | pvalues |
+| ------: | --------: | ------: | -------: | ------: |
+|       1 |     25.79 |  \-3.20 |     4.17 |    0.46 |
+|       2 |     32.59 |    2.17 |     5.05 |    0.68 |
+|       3 |     28.30 | \-19.74 |     4.30 |    0.00 |
+|       4 |     39.47 | \-11.90 |     3.13 |    0.00 |
+|       5 |     18.70 |  \-5.79 |     3.56 |    0.11 |
+|       6 |     37.34 |  \-2.70 |     1.94 |    0.17 |
 
 ``` r
 summary(aov(gi_new ~ cluster * years + Error(id), data = pat))

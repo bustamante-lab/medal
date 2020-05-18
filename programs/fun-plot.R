@@ -371,38 +371,41 @@ plotScores <- function(cluster, outcomes, score, ylims=c(0,100,5),
                        title=TRUE, xlabel=TRUE){
   maxDay = years*365
   
-  pat <- getClusterScores(profiles, cluster, outcomes, maxDay)
+  pat <- getClusterScores(profiles, cluster, outcomes, maxDay) %>%
+    mutate(years=daysSinceOnset/365) %>%
+    mutate(cluster=cluster)
   
   
   #Calculate direction of trend
-   trend <- lm(formula=get(score)~daysSinceOnset, data=pat)
-   
-   slope = round(trend$coefficients[2], digits=2)
-   
-   if(trend$coefficients[2] >= 0){
-     trend.color <- "#fc8d59" #orange
-  } else{
-     trend.color <- "#91bfdb" #blue
-  }
+  pat <- getClusterProfiles(profiles, outcomes, years)
+  cluster_column = case_when(cluster==1 ~ "one", cluster==2 ~ "two", cluster==3 ~ "three",
+                     cluster==4 ~ "four", cluster==5 ~ "five", cluster==6 ~ "six")
   
+  model <- lmer(get(score) ~ years + (years | id), 
+                data = pat %>% filter(get(cluster_column)==1), REML = F)
+  intercept = model@beta[1]
+  slope = model@beta[2]
+   
+   if(slope >= 0){
+     model.color <- "#fc8d59" #orange
+  } else{
+     model.color <- "#91bfdb" #blue
+  }
+   
+   
+   
+   
   #Plot heatmap
   gScore <- 
-    ggplot(data = pat, aes(x = daysSinceOnset,  y = get(score))) +
-    #geom_point(aes(group=id, color=id), size=1)+
-    #geom_line(aes(group=id, color=id), size=0.5, linetype="dashed")+
-    #geom_smooth(aes(group=id), color="gray50", method = "lm", size=1, se=FALSE) +
-    #geom_line(aes(group=id), stat="smooth", method = "lm",
-    #          color = "gray50", size = 1, linetype ="solid", alpha = 0.4) +
-    #geom_smooth(method = "loess", size=0.5, se=FALSE, color="gray50") +
-    geom_smooth(method = "lm", size=2, se=FALSE, color=trend.color,
-                na.rm = TRUE, formula=y~x) +
-    #annotate("text", x=500, y=30, label= slope, size=15) +
+    ggplot(data = pat, aes(x = years,  y = get(score))) +
+    geom_line(aes(group=id, color=id), size=0.5, linetype="dashed", color="white") +
+    geom_abline(intercept=intercept, slope=slope, color=model.color, size=2) +
     scale_y_continuous(limits = c(ylims[1], ylims[2]), 
                        breaks=seq(0, ylims[2], (ylims[2]-ylims[1])/ylims[3]), 
                        expand=c(0,0)) +
-    scale_x_continuous(limits = c(0, maxDay) , 
-                       breaks=seq(0,(maxDay+365),365),
-                       labels=paste("year", seq(0,(maxDay+365),365)/365),
+    scale_x_continuous(limits = c(0, years) , 
+                       breaks=seq(0,years,1),
+                       labels=paste("year", seq(0,years,1)),
                        expand = c(0, 0)) +
     labs(y=label, 
       x="Time since onset") +

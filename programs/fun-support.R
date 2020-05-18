@@ -237,3 +237,33 @@ cleanEvents <- function(data, groups){
   
   return(data)
 }
+
+
+getClusterProfiles <- function(profiles, outcomes, years){
+  #Get profiles for patients in each cluster
+  pat1 <- getClusterScores(profiles, 1, outcomes, years) %>% mutate(cluster="1")
+  pat2 <- getClusterScores(profiles, 2, outcomes, years) %>% mutate(cluster="2")
+  pat3 <- getClusterScores(profiles, 3, outcomes, years) %>% mutate(cluster="3")
+  pat4 <- getClusterScores(profiles, 4, outcomes, years) %>% mutate(cluster="4")
+  pat5 <- getClusterScores(profiles, 5, outcomes, years) %>% mutate(cluster="5")
+  pat6 <- getClusterScores(profiles, 6, outcomes, years) %>% mutate(cluster="6")
+  
+  pat <- pat1 %>%
+    bind_rows(pat2) %>%
+    bind_rows(pat3) %>%
+    bind_rows(pat4) %>%
+    bind_rows(pat5) %>%
+    bind_rows(pat6)
+  
+  pat <- pat %>%
+    mutate(one = case_when(cluster == 1 ~ 1, TRUE ~ 0)) %>%
+    mutate(two = case_when(cluster == 2 ~ 1, TRUE ~ 0)) %>%
+    mutate(three = case_when(cluster == 3 ~ 1, TRUE ~ 0)) %>%
+    mutate(four = case_when(cluster == 4 ~ 1, TRUE ~ 0)) %>%
+    mutate(five = case_when(cluster == 5 ~ 1, TRUE ~ 0)) %>%
+    mutate(six = case_when(cluster == 6 ~ 1, TRUE ~ 0))
+  
+  #Convert days to years
+  pat <- pat %>%
+    mutate(years=daysSinceOnset/365)
+}

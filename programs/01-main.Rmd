@@ -459,33 +459,7 @@ gpanels
 # Step 9. ANOVA
 
 ```{r, anova}
-
-#Get profiles for patients in each cluster
-pat1 <- getClusterScores(profiles, 1, outcomes, years) %>% mutate(cluster="1")
-pat2 <- getClusterScores(profiles, 2, outcomes, years) %>% mutate(cluster="2")
-pat3 <- getClusterScores(profiles, 3, outcomes, years) %>% mutate(cluster="3")
-pat4 <- getClusterScores(profiles, 4, outcomes, years) %>% mutate(cluster="4")
-pat5 <- getClusterScores(profiles, 5, outcomes, years) %>% mutate(cluster="5")
-pat6 <- getClusterScores(profiles, 6, outcomes, years) %>% mutate(cluster="6")
-
-pat <- pat1 %>%
-  bind_rows(pat2) %>%
-  bind_rows(pat3) %>%
-  bind_rows(pat4) %>%
-  bind_rows(pat5) %>%
-  bind_rows(pat6)
-
-pat <- pat %>%
-  mutate(one = case_when(cluster == 1 ~ 1, TRUE ~ 0)) %>%
-  mutate(two = case_when(cluster == 2 ~ 1, TRUE ~ 0)) %>%
-  mutate(three = case_when(cluster == 3 ~ 1, TRUE ~ 0)) %>%
-  mutate(four = case_when(cluster == 4 ~ 1, TRUE ~ 0)) %>%
-  mutate(five = case_when(cluster == 5 ~ 1, TRUE ~ 0)) %>%
-  mutate(six = case_when(cluster == 6 ~ 1, TRUE ~ 0))
-
-#Convert days to years
-pat <- pat %>%
-  mutate(years=daysSinceOnset/365)
+pat <- getClusterProfiles(profiles, outcomes, years)
 
 #Plot the scores
 gi_new <- ggplot(pat)+
@@ -513,33 +487,55 @@ gpanels
 
 
 ## Obtain summaries
-summary(lmer(gi_new ~ cluster*years + (years | id), data = pat, REML = F))
-summary(lmer(gi_new ~ years + (years | id), 
+#summary(lmer(gi_new ~ cluster*years + (years | id), data = pat, REML = F))
+mod1 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(one==1), REML = F))$coefficients
+mod2 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(two==1), REML = F))$coefficients
+mod3 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(three==1), REML = F))$coefficients
+mod4 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(four==1), REML = F))$coefficients
+mod5 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(five==1), REML = F))$coefficients
+mod6 <- summary(lmer(gi_new ~ years + (years | id), 
+                     data = pat %>% filter(six==1), REML = F))$coefficients
+
+intercept <- c(mod1[1], mod2[1], mod3[1], mod4[1], mod5[1], mod6[1])
+slope <- c(mod1[2], mod2[2], mod3[2], mod4[2], mod5[2], mod6[2])
+sderrors <- c(mod1[4], mod2[4], mod3[4], mod4[4], mod5[4], mod6[4])
+pvalues <- c(mod1[10], mod2[10], mod3[10], mod4[10], mod5[10], mod6[10])
+
+#Print table
+as.data.frame(cbind(cluster=c(1:k), intercept, slope, sderrors, pvalues)) %>%
+  round(digits=2) %>%
+  kable()
+
+
+#summary(lmer(cbiTotal ~ cluster*years + (years | id), data = pat, REML = F))
+mod1 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(one==1), REML = F))$coefficients
-summary(lmer(gi_new ~ years + (years | id), 
+mod2 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(two==1), REML = F))$coefficients
-summary(lmer(gi_new ~ years + (years | id), 
+mo3 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(three==1), REML = F))$coefficients
-summary(lmer(gi_new ~ years + (years | id), 
+mod4 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(four==1), REML = F))$coefficients
-summary(lmer(gi_new ~ years + (years | id), 
+mod5 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(five==1), REML = F))$coefficients
-summary(lmer(gi_new ~ years + (years | id), 
+mod6 <- summary(lmer(cbiTotal ~ years + (years | id), 
              data = pat %>% filter(six==1), REML = F))$coefficients
 
-summary(lmer(cbiTotal ~ cluster*years + (years | id), data = pat, REML = F))
-summary(lmer(cbiTotal ~ years + (years | id), 
-             data = pat %>% filter(one==1), REML = F))$coefficients
-summary(lmer(cbiTotal ~ years + (years | id), 
-             data = pat %>% filter(two==1), REML = F))$coefficients
-summary(lmer(cbiTotal ~ years + (years | id), 
-             data = pat %>% filter(three==1), REML = F))$coefficients
-summary(lmer(cbiTotal ~ years + (years | id), 
-             data = pat %>% filter(four==1), REML = F))$coefficients
-summary(lmer(cbiTotal ~ years + (years | id), 
-             data = pat %>% filter(five==1), REML = F))$coefficients
-summary(lmer(cbiTotal ~ years + (years | id), 
-             data = pat %>% filter(six==1), REML = F))$coefficients
+intercept <- c(mod1[1], mod2[1], mod3[1], mod4[1], mod5[1], mod6[1])
+slope <- c(mod1[2], mod2[2], mod3[2], mod4[2], mod5[2], mod6[2])
+sderrors <- c(mod1[4], mod2[4], mod3[4], mod4[4], mod5[4], mod6[4])
+pvalues <- c(mod1[10], mod2[10], mod3[10], mod4[10], mod5[10], mod6[10])
+
+#Print table
+as.data.frame(cbind(cluster=c(1:k), intercept, slope, sderrors, pvalues)) %>%
+  round(digits=2) %>%
+  kable()
+
 
 summary(aov(gi_new ~ cluster * years + Error(id), data = pat))
 
