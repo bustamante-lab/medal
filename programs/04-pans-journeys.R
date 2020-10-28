@@ -17,8 +17,79 @@ library(scales)
 timeline = TRUE
 cohort = FALSE
 
-source("fun-support.R")
-source("fun-pans.R")
+source(here("programs", "fun-support.R"))
+source(here("programs", "fun-plot.R"))
+
+
+
+#--------------------------------------
+# Step 2. Read clean dataFiles
+#--------------------------------------
+
+#---
+#File with patient ID (de-ID), comorbidities, initial clinical presentation, etc.
+patients.og <- read_csv(here("data", "patients.csv")) %>%
+  column_to_rownames(var="id") 
+
+#Select only a few columns
+patients <- patients.og %>%
+  select("age_onset", "age_1st_appt", "is_male", "NHW", "OCD", "foodprob", "anx", 
+         "emotional", "mood", "agg", "sch", "reg", "sleep", "tics") %>%
+  drop_na()
+
+#---
+#File with events
+events.og <- read_csv(here("data", "medications.csv")) 
+
+#Select only events related to patients in the previous file
+events <- events.og %>%
+  filter(id %in% rownames(patients)) %>%
+  select("id", "medication", "start", "end")
+
+#---
+#File with clinical evaluations (outcomes)
+outcomes.og <- read_csv(here("data","outcomes.csv"))
+
+#Select only rows for the same patients listed in Profiles
+outcomes <- outcomes.og %>%
+  filter(id %in% rownames(patients)) %>%
+  select("id", "gi_new", "cbiTotal", "daysSinceBirth")
+
+#---
+#Censoring
+years = 2
+
+#--------------------------------------
+# Step 2. Clean data
+#--------------------------------------
+
+
+# Group by class of medication
+medgroups <- lst(penicillin = c("penicillin v", "penicillin g", "amoxicillin", "augmentin"),
+                 cephalosporin = c("cephalexin", "cefadroxil"), 
+                 macrolide = c("azithromycin"),
+                 nsaid = c("ibuprofen", "naproxen", "indomethacin", "sulindac", "aspirin"),
+                 corticosteroid.oral = c("prednisone", "maintenance prednisone", "decadron"),
+                 corticosteroid.iv = c("solumedrol"),
+                 immunoglobulins = c("ivig"),
+                 dmard = c("rituximab", "methotrexate", "cellcept"))
+
+medcolors= c("penicillin"="#66c2a5",
+             "cephalosporin" = "#fc8d62",
+             "macrolide" = "#8da0cb",
+             "nsaid" = "#e7298a",
+             "corticosteroid.oral" = "#a6d854",
+             "corticosteroid.iv" = "#ffd92f",
+             "antibody" = "green",
+             "immunoglobulins" = "#e5c494",
+             "dmard" = "#b3b3b3")
+
+
+events <- events.og %>%
+  cleanEvents(medgroups) %>%
+  rightCensoring(years)
+
+
 
 
 
@@ -28,15 +99,17 @@ source("fun-pans.R")
 
 plist = list()
 
-for(patient in patients){
+
+
+for(patient in rownames(patients)){
   
   #Get the events for one patient
   patIDs = which(events[,"id"] == patient)
   pat = events[patIDs, ]
   
-  profIndex = which(profiles$id==patient)
-  firstAppointment = ceiling(profiles[profIndex,"age_1st_appt"]*365)
-  firstOnset = ceiling(profiles[profIndex, "age_onset"]*365)
+  #profIndex = which(patients$id==patient)
+  firstAppointment = ceiling(patients[patient,"age_1st_appt"]*365)
+  firstOnset = ceiling(patients[patient, "age_onset"]*365)
   
   # add duration for all events and order
   pat$duration = pat[,"end"] - pat[,"start"]
@@ -122,25 +195,18 @@ for(patient in patients){
   #------------------------
   # plot the patient timeline
   #------------------------
-  
-  mycodes <- c("penicillin"="#1b9e77",
-               "cephalosporin"="#d95f02",
-               "macrolide"="#7570b3",
-               "nsaid"="#e7298a",
-               "hydrocortisone"="#66a61e",
-               "antibody"="#e6ab02",
-               "dmard"="#a6761d")
+
   
   
   #Plot
   gPat <- ggplot(pat) + 
     geom_segment(aes(x=start, xend=end, y=medication, yend=medication, colour=medication), 
                  size=8, lineend="butt") +
-    scale_color_manual(values = mycodes,
-                       limits = names(mycodes)) +
+    scale_color_manual(values = medcolors,
+                       limits = names(medcolors)) +
     geom_vline(xintercept = firstOnset, linetype="dotted", color="red") +
     geom_vline(xintercept = firstAppointment, linetype="dashed") +
-    scale_y_discrete(limits = rev(names(mycodes))) +
+    scale_y_discrete(limits = rev(names(medcolors))) +
     scale_x_continuous(limits = c(floor(firstOnset/365)*365,ceiling(maxdays/365)*365), 
                        breaks = seq(floor(firstOnset/365)*365,maxdays+365,365),
                        labels = paste("year", seq(floor(firstOnset/365)*365,maxdays+365,365)/365),
@@ -178,8 +244,9 @@ for(patient in patients){
   #plist[[patient]] = get(var)
   
   
-  filepathname = paste("../../images/timeline-scores/patient",patient,".png", sep="")
-  ggexport(gpanels, filename=filepathname, height = 3000, width = 4000, res=300)
+  filepathname = paste(here("images", "journeys", 
+                            paste0("patient", patient,".png", sep="")))
+  ggexport(gpanels, filename=filepathname, height = 2000, width = 3000, res=300)
   
 }
 

@@ -57,7 +57,7 @@ source(here("programs", "fun-plot.R"))
 
 #---
 #File with patient ID (de-ID), comorbidities, initial clinical presentation, etc.
-patients.og <- read_csv(here("../data", "patients.csv")) %>%
+patients.og <- read_csv(here("data", "patients.csv")) %>%
   column_to_rownames(var="id") 
 
 #Select only a few columns
@@ -68,7 +68,7 @@ patients <- patients.og %>%
 
 #---
 #File with events
-events.og <- read_csv(here("../data", "medications.csv")) 
+events.og <- read_csv(here("data", "medications.csv")) 
 
 #Select only events related to patients in the previous file
 events <- events.og %>%
@@ -77,7 +77,7 @@ events <- events.og %>%
 
 #---
 #File with clinical evaluations (outcomes)
-outcomes.og <- read_csv(here("../data","outcomes.csv"))
+outcomes.og <- read_csv(here("data","outcomes.csv"))
 
 #Select only rows for the same patients listed in Profiles
 outcomes <- outcomes.og %>%
@@ -120,7 +120,7 @@ events <- events.og %>%
   cleanEvents(medgroups) %>%
   rightCensoring(years)
 
-write_csv(events, here("../data", "data-matrix-clean.csv"))
+write_csv(events, here("data", "data-matrix-clean.csv"))
 
 ```
 
@@ -133,7 +133,7 @@ write_csv(events, here("../data", "data-matrix-clean.csv"))
 #Calling pyMEDAL
 
 pymedal <- here("pymedal", "pymedal.py")
-input <- here("../data", "data-matrix-clean.csv")
+input <- here("data", "data-matrix-clean.csv")
 
 system(paste('python3', pymedal, input), wait=TRUE)
 
